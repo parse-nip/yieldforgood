@@ -1,65 +1,186 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Yield For Good</title>
-  <link rel="stylesheet" href="styles.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yield For Good</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f8f9fa;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 50px;
+        }
+
+        .logo {
+            font-size: 24px;
+            color: #333;
+        }
+
+        .nav {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .donate-btn {
+            background-color: #1a1a1a;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .hero {
+            text-align: center;
+            padding: 100px 20px;
+        }
+
+        .hero h1 {
+            font-size: 48px;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .hero p {
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            padding: 50px 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 36px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            color: #666;
+        }
+
+        .marquee-container {
+            background-color: #e9ecef;
+            overflow: hidden;
+            white-space: nowrap;
+            padding: 20px 0;
+        }
+
+        .marquee {
+            display: inline-block;
+            animation: marquee 20s linear infinite;
+        }
+
+        .marquee img {
+            width: 50px;
+            margin: 0 50px;
+        }
+
+        @keyframes marquee {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+
+        .info-section {
+            text-align: center;
+            padding: 100px 20px;
+        }
+
+        .info-section h2 {
+            font-size: 36px;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .info-section p {
+            color: #666;
+            max-width: 800px;
+            margin: 0 auto 30px;
+        }
+
+        .flowchart {
+            max-width: 800px;
+            margin: 40px auto;
+        }
+
+        .flowchart img {
+            width: 100%;
+        }
+    </style>
 </head>
 <body>
-  <header>
-    <div class="container">
-      <div class="header-left">
-        <h1>Yield For <span class="logo-highlight">Good</span></h1>
-      </div>
-      <div class="header-right">
-        <nav>
-          <a href="#about">About</a>
-          <a href="#donate" class="btn">Donate Now</a>
+    <header class="header">
+        <div class="logo">Yield For Good</div>
+        <nav class="nav">
+            <a href="#about">About</a>
+            <a href="#" class="donate-btn">DONATE NOW</a>
         </nav>
-      </div>
-    </div>
-  </header>
+    </header>
 
-  <main>
     <section class="hero">
-      <h2>The World's First No-loss Charity</h2>
-      <p>Introducing the world's first no-loss charity, built on Blast.</p>
-      <a href="#get-started" class="btn btn-primary">Get Started</a>
+        <h1>The World's First No-loss Charity</h1>
+        <p>Introducing the world's first no-loss charity, built on Blast.</p>
+        <a href="#" class="donate-btn">GET STARTED</a>
     </section>
 
     <section class="stats">
-      <div>
-        <h3>12</h3>
-        <p>Charities Supported</p>
-      </div>
-      <div>
-        <h3>$25,000</h3>
-        <p>Amount Donated</p>
-      </div>
-      <div>
-        <h3>$500,000</h3>
-        <p>Amount Deposited</p>
-      </div>
+        <div class="stat-item">
+            <div class="stat-number">12</div>
+            <div class="stat-label">Charities Supported</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number">$25,000</div>
+            <div class="stat-label">Amount Donated</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number">$500,000</div>
+            <div class="stat-label">Amount Deposited</div>
+        </div>
     </section>
 
-    <section class="marquee">
-      <div class="marquee-content">
-        <img src="panda-logo.png" alt="WWF Logo">
-        <img src="panda-logo.png" alt="WWF Logo">
-        <img src="panda-logo.png" alt="WWF Logo">
-        <img src="panda-logo.png" alt="WWF Logo">
-      </div>
-    </section>
+    <div class="marquee-container">
+        <div class="marquee">
+            <img src="panda-logo.png" alt="WWF">
+            <img src="panda-logo.png" alt="WWF">
+            <img src="panda-logo.png" alt="WWF">
+            <img src="panda-logo.png" alt="WWF">
+            <img src="panda-logo.png" alt="WWF">
+            <img src="panda-logo.png" alt="WWF">
+        </div>
+    </div>
 
-    <section class="info">
-      <h2>Support your favorite charities without spending a cent.</h2>
-      <p>Support a charity of your choice without investing any money. Lock up your crypto assets for as little as one week to contribute. This is made possible using the Ethereum Layer 2 Blast.</p>
-      <div class="flowchart">
-        <img src="flowchart.png" alt="How It Works">
-      </div>
-      <a href="#donate" class="btn btn-primary">Donate Now</a>
+    <section class="info-section">
+        <h2>Support your favorite charities without spending a cent.</h2>
+        <p>Support a charity of your choice without investing any money. Lock up your crypto assets for as little as one week to contribute. This is made possible using the Ethereum Layer 2 Blast.</p>
+        <div class="flowchart">
+            <img src="flowchart.png" alt="Process Flowchart">
+        </div>
+        <p>It's that simple. No strings attached or fees taken. Yield for Good is and always will be a nonprofit, operating for nothing more than the greater good.</p>
+        <a href="#" class="donate-btn">DONATE NOW</a>
     </section>
-  </main>
 </body>
 </html>

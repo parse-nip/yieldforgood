@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Donate - Yield For Good</title>
-    <!-- Add ethers.js -->
     <script src="https://cdn.ethers.io/lib/ethers-5.7.2.umd.min.js" type="application/javascript"></script>
     <style>
         /* Previous CSS remains exactly the same */
@@ -29,6 +28,10 @@
             margin: 0 auto;
         }
 
+        .logo {
+            cursor: pointer;
+        }
+
         .logo img {
             height: 60px;
         }
@@ -39,13 +42,18 @@
             align-items: center;
         }
 
-        .donate-btn {
+        .donate-btn, .withdraw-btn {
             background-color: #1a1a1a;
             color: white;
             padding: 10px 20px;
             border: none;
             border-radius: 5px;
             text-decoration: none;
+            cursor: pointer;
+        }
+
+        .withdraw-btn {
+            background-color: #4a4a4a;
         }
 
         .charities-grid {
@@ -168,12 +176,13 @@
 </head>
 <body>
     <header class="header">
-        <div class="logo">
+        <a href="index.html" class="logo">
             <img src="logo.png" alt="Yield For Good">
-        </div>
+        </a>
         <nav class="nav">
             <a href="#about">About</a>
             <a href="#" class="donate-btn">DONATE NOW</a>
+            <button onclick="withdrawFunds()" class="withdraw-btn">WITHDRAW</button>
         </nav>
     </header>
 
@@ -209,7 +218,8 @@
     <script>
         // Contract ABI - Replace with your actual contract ABI
         const contractABI = [
-            "function donate(uint256 lockPeriod) public payable"
+            "function donate(uint256 lockPeriod) public payable",
+            "function withdraw() public"
         ];
 
         // Contract address - Replace with your actual contract address
@@ -221,25 +231,37 @@
 
         async function connectWallet() {
             try {
-                // Check if MetaMask is installed
                 if (typeof window.ethereum === 'undefined') {
                     throw new Error('Please install MetaMask to use this feature');
                 }
 
-                // Request account access
                 await window.ethereum.request({ method: 'eth_requestAccounts' });
                 
-                // Create Web3 Provider
                 const provider = new ethers.providers.Web3Provider(window.ethereum);
                 signer = provider.getSigner();
                 
-                // Create Contract Instance
                 contract = new ethers.Contract(contractAddress, contractABI, signer);
                 
                 return true;
             } catch (error) {
                 showStatus(error.message, true);
                 return false;
+            }
+        }
+
+        async function withdrawFunds() {
+            try {
+                if (!await connectWallet()) {
+                    return;
+                }
+
+                const tx = await contract.withdraw();
+                showStatus('Processing withdrawal...');
+                
+                await tx.wait();
+                showStatus('Withdrawal successful!');
+            } catch (error) {
+                showStatus(error.message, true);
             }
         }
 
@@ -281,17 +303,14 @@
             const lockPeriod = document.getElementById('lock-period').value;
 
             try {
-                // Convert ETH to Wei
                 const weiAmount = ethers.utils.parseEther(ethAmount.toString());
                 
-                // Call the contract's donate function
                 const tx = await contract.donate(lockPeriod, {
                     value: weiAmount
                 });
 
                 showStatus('Processing transaction...');
                 
-                // Wait for transaction to be mined
                 await tx.wait();
                 
                 showStatus('Donation successful!');

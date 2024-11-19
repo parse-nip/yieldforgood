@@ -1,8 +1,16 @@
+/* General Styles */
 body {
   margin: 0;
   font-family: Arial, sans-serif;
   background-color: #f8f9fa;
   color: #333;
+  line-height: 1.6;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
 }
 
 header {
@@ -32,6 +40,7 @@ header {
   color: #333;
 }
 
+/* Buttons */
 .btn {
   background-color: #333;
   color: #fff;
@@ -40,31 +49,56 @@ header {
   text-decoration: none;
   font-size: 1em;
   cursor: pointer;
+  border-radius: 5px;
 }
 
+.btn:hover {
+  background-color: #555;
+}
+
+/* Hero Section */
 .hero {
   text-align: center;
-  padding: 50px 20px;
+  padding: 80px 20px;
   background-color: #fff;
 }
 
+.hero h2 {
+  font-size: 2em;
+  margin-bottom: 10px;
+}
+
+.hero .btn-primary {
+  margin-top: 20px;
+  font-size: 1.2em;
+}
+
+/* Stats Section */
 .stats {
   display: flex;
-  justify-content: center;
-  gap: 50px;
-  padding: 20px 0;
+  justify-content: space-around;
+  text-align: center;
+  padding: 40px 0;
   background-color: #f0f4f8;
 }
 
 .stats div {
-  text-align: center;
+  max-width: 150px;
 }
 
 .stats h3 {
   margin: 0;
-  font-size: 2em;
+  font-size: 2.5em;
+  color: #333;
 }
 
+.stats p {
+  margin: 10px 0 0;
+  font-size: 1em;
+  color: #555;
+}
+
+/* Marquee */
 .marquee {
   overflow: hidden;
   background-color: #e9ecef;
@@ -86,18 +120,28 @@ header {
   100% { transform: translateX(-100%); }
 }
 
+/* Info Section */
 .info {
   text-align: center;
-  padding: 50px 20px;
+  padding: 60px 20px;
 }
 
 .flowchart img {
   max-width: 100%;
   height: auto;
-  margin: 20px 0;
+  margin: 20px auto;
+  display: block;
 }
 
-.btn {
-  display: inline-block;
-  text-align: center;
+/* Responsive Design */
+@media (max-width: 768px) {
+  header {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .stats {
+    flex-direction: column;
+    gap: 20px;
+  }
 }

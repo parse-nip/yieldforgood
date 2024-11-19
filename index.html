@@ -23,10 +23,11 @@
             padding: 20px 50px;
         }
 
-        .logo img {
-            height: 40px;
-            width: auto;
-        }
+/* Update the header logo size */
+.logo img {
+    height: 60px; /* Increased from 40px */
+    width: auto;
+}
 
         .nav {
             display: flex;
@@ -83,28 +84,37 @@
             color: #666;
         }
 
-        .marquee-container {
-            background-color: #e9ecef;
-            overflow: hidden;
-            white-space: nowrap;
-            padding: 20px 0;
-        }
+/* Update marquee container and animation */
+.marquee-container {
+    background-color: #e9ecef;
+    overflow: hidden;
+    white-space: nowrap;
+    padding: 20px 0;
+    position: relative;
+}
 
-        .marquee {
-            display: inline-block;
-            animation: marquee 30s linear infinite;
-        }
+.marquee {
+    display: inline-block;
+    animation: marquee 30s linear infinite;
+    padding-left: 100%;
+}
 
-        .marquee img {
-            width: 100px;
-            margin: 0 100px;
-        }
+.marquee-inner {
+    display: inline-block;
+}
 
-        @keyframes marquee {
-            0% { transform: translateX(100%); }
-            100% { transform: translateX(-100%); }
-        }
+@keyframes marquee {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-100%); }
+}
 
+.marquee img {
+    width: 100px;
+    margin: 0 100px;
+}
+
+
+        
         .info-section {
             text-align: center;
             padding: 100px 20px;
@@ -164,10 +174,17 @@
         </div>
     </section>
 
-    <div class="marquee-container">
-        <div class="marquee">
+<div class="marquee-container">
+    <div class="marquee">
+        <div class="marquee-inner">
             <img src="panda-logo.png" alt="WWF">
             <img src="panda-logo.png" alt="WWF">
+            <img src="panda-logo.png" alt="WWF">
+            <img src="panda-logo.png" alt="WWF">
+            <img src="panda-logo.png" alt="WWF">
+            <img src="panda-logo.png" alt="WWF">
+        </div>
+        <div class="marquee-inner">
             <img src="panda-logo.png" alt="WWF">
             <img src="panda-logo.png" alt="WWF">
             <img src="panda-logo.png" alt="WWF">
@@ -176,7 +193,9 @@
             <img src="panda-logo.png" alt="WWF">
         </div>
     </div>
+</div>
 
+    
     <section class="info-section">
         <h2>Support your favorite charities without spending a cent.</h2>
         <p>Support a charity of your choice without investing any money. Lock up your crypto assets for as little as one week to contribute. This is made possible using the Ethereum Layer 2 Blast.</p>

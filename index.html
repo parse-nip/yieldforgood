@@ -23,11 +23,10 @@
             padding: 20px 50px;
         }
 
-/* Update the header logo size */
-.logo img {
-    height: 60px; /* Increased from 40px */
-    width: auto;
-}
+        .logo img {
+            height: 60px;
+            width: auto;
+        }
 
         .nav {
             display: flex;
@@ -84,37 +83,45 @@
             color: #666;
         }
 
-/* Update marquee container and animation */
-.marquee-container {
-    background-color: #e9ecef;
-    overflow: hidden;
-    white-space: nowrap;
-    padding: 20px 0;
-    position: relative;
-}
+        .marquee-container {
+            background-color: #e9ecef;
+            overflow: hidden;
+            padding: 20px 0;
+            position: relative;
+            width: 100%;
+        }
 
-.marquee {
-    display: inline-block;
-    animation: marquee 30s linear infinite;
-    padding-left: 100%;
-}
+        .marquee-track {
+            display: flex;
+            width: calc(100px * 24); /* Width of logo * number of logos */
+            animation: scroll 20s linear infinite;
+        }
 
-.marquee-inner {
-    display: inline-block;
-}
+        @keyframes scroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(calc(-100px * 12)); } /* Half of total width */
+        }
 
-@keyframes marquee {
-    0% { transform: translateX(0); }
-    100% { transform: translateX(-100%); }
-}
+        .marquee-content {
+            display: flex;
+            justify-content: space-around;
+            min-width: 100%;
+        }
 
-.marquee img {
-    width: 100px;
-    margin: 0 100px;
-}
+        .marquee-item {
+            width: 100px;
+            height: 100px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
+        .marquee-item img {
+            width: 80px;
+            height: auto;
+        }
 
-        
         .info-section {
             text-align: center;
             padding: 100px 20px;
@@ -174,28 +181,41 @@
         </div>
     </section>
 
-<div class="marquee-container">
-    <div class="marquee">
-        <div class="marquee-inner">
-            <img src="panda-logo.png" alt="WWF">
-            <img src="panda-logo.png" alt="WWF">
-            <img src="panda-logo.png" alt="WWF">
-            <img src="panda-logo.png" alt="WWF">
-            <img src="panda-logo.png" alt="WWF">
-            <img src="panda-logo.png" alt="WWF">
-        </div>
-        <div class="marquee-inner">
-            <img src="panda-logo.png" alt="WWF">
-            <img src="panda-logo.png" alt="WWF">
-            <img src="panda-logo.png" alt="WWF">
-            <img src="panda-logo.png" alt="WWF">
-            <img src="panda-logo.png" alt="WWF">
-            <img src="panda-logo.png" alt="WWF">
+    <div class="marquee-container">
+        <div class="marquee-track">
+            <!-- First set of items -->
+            <div class="marquee-content">
+                <div class="marquee-item"><img src="panda-logo.png" alt="WWF"></div>
+                <div class="marquee-item"><img src="panda-logo.png" alt="WWF"></div>
+                <div class="marquee-item"><img src="panda-logo.png" alt="WWF"></div>
+                <div class="marquee-item"><img src="panda-logo.png" alt="WWF"></div>
+                <div class="marquee-item"><img src="panda-logo.png" alt="WWF"></div>
+                <div class="marquee-item"><img src="panda-logo.png" alt="WWF"></div>
+                <div class="marquee-item"><img src="panda-logo.png" alt="WWF"></div>
+                <div class="marquee-item"><img src="panda-logo.png" alt="WWF"></div>
+                <div class="marquee-item"><img src="panda-logo.png" alt="WWF"></div>
+                <div class="marquee-item"><img src="panda-logo.png" alt="WWF"></div>
+                <div class="marquee-item"><img src="panda-logo.png" alt="WWF"></div>
+                <div class="marquee-item"><img src="panda-logo.png" alt="WWF"></div>
+            </div>
+            <!-- Duplicate set for seamless loop -->
+            <div class="marquee-content">
+                <div class="marquee-item"><img src="panda-logo.png" alt="WWF"></div>
+                <div class="marquee-item"><img src="panda-logo.png" alt="WWF"></div>
+                <div class="marquee-item"><img src="panda-logo.png" alt="WWF"></div>
+                <div class="marquee-item"><img src="panda-logo.png" alt="WWF"></div>
+                <div class="marquee-item"><img src="panda-logo.png" alt="WWF"></div>
+                <div class="marquee-item"><img src="panda-logo.png" alt="WWF"></div>
+                <div class="marquee-item"><img src="panda-logo.png" alt="WWF"></div>
+                <div class="marquee-item"><img src="panda-logo.png" alt="WWF"></div>
+                <div class="marquee-item"><img src="panda-logo.png" alt="WWF"></div>
+                <div class="marquee-item"><img src="panda-logo.png" alt="WWF"></div>
+                <div class="marquee-item"><img src="panda-logo.png" alt="WWF"></div>
+                <div class="marquee-item"><img src="panda-logo.png" alt="WWF"></div>
+            </div>
         </div>
     </div>
-</div>
 
-    
     <section class="info-section">
         <h2>Support your favorite charities without spending a cent.</h2>
         <p>Support a charity of your choice without investing any money. Lock up your crypto assets for as little as one week to contribute. This is made possible using the Ethereum Layer 2 Blast.</p>

@@ -4,7 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Donate - Yield For Good</title>
+    <!-- Add ethers.js -->
+    <script src="https://cdn.ethers.io/lib/ethers-5.7.2.umd.min.js" type="application/javascript"></script>
     <style>
+        /* Previous CSS remains exactly the same */
         * {
             margin: 0;
             padding: 0;
@@ -76,7 +79,6 @@
             margin-bottom: 20px;
         }
 
-        /* Modal styles */
         .modal {
             display: none;
             position: fixed;
@@ -145,6 +147,23 @@
         .submit-btn:hover {
             background-color: #555;
         }
+
+        #status-message {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 5px;
+            display: none;
+        }
+
+        .error {
+            background-color: #ffe6e6;
+            color: #ff0000;
+        }
+
+        .success {
+            background-color: #e6ffe6;
+            color: #008000;
+        }
     </style>
 </head>
 <body>
@@ -164,10 +183,8 @@
             <h3>WWF</h3>
             <p>World Wildlife Fund</p>
         </div>
-        <!-- Add more charity cards as needed -->
     </div>
 
-    <!-- Donation Modal -->
     <div class="modal" id="donationModal">
         <div class="modal-content">
             <span class="close-modal" onclick="closeModal()">&times;</span>
@@ -185,11 +202,49 @@
 
                 <button type="submit" class="submit-btn">Confirm Donation</button>
             </form>
+            <div id="status-message"></div>
         </div>
     </div>
 
     <script>
+        // Contract ABI - Replace with your actual contract ABI
+        const contractABI = [
+            "function donate(uint256 lockPeriod) public payable"
+        ];
+
+        // Contract address - Replace with your actual contract address
+        const contractAddress = "YOUR_CONTRACT_ADDRESS";
+
+        let selectedCharity = '';
+        let contract;
+        let signer;
+
+        async function connectWallet() {
+            try {
+                // Check if MetaMask is installed
+                if (typeof window.ethereum === 'undefined') {
+                    throw new Error('Please install MetaMask to use this feature');
+                }
+
+                // Request account access
+                await window.ethereum.request({ method: 'eth_requestAccounts' });
+                
+                // Create Web3 Provider
+                const provider = new ethers.providers.Web3Provider(window.ethereum);
+                signer = provider.getSigner();
+                
+                // Create Contract Instance
+                contract = new ethers.Contract(contractAddress, contractABI, signer);
+                
+                return true;
+            } catch (error) {
+                showStatus(error.message, true);
+                return false;
+            }
+        }
+
         function openModal(charityName) {
+            selectedCharity = charityName;
             const modal = document.getElementById('donationModal');
             const modalTitle = document.getElementById('modalTitle');
             modalTitle.textContent = `Donate to ${charityName}`;
@@ -199,22 +254,52 @@
         function closeModal() {
             const modal = document.getElementById('donationModal');
             modal.classList.remove('active');
+            document.getElementById('status-message').style.display = 'none';
         }
 
-        // Close modal if clicking outside the content
+        function showStatus(message, isError = false) {
+            const statusElement = document.getElementById('status-message');
+            statusElement.textContent = message;
+            statusElement.className = isError ? 'error' : 'success';
+            statusElement.style.display = 'block';
+        }
+
         document.getElementById('donationModal').addEventListener('click', function(e) {
             if (e.target === this) {
                 closeModal();
             }
         });
 
-        document.getElementById('donationForm').addEventListener('submit', function(e) {
+        document.getElementById('donationForm').addEventListener('submit', async function(e) {
             e.preventDefault();
-            // Add your donation handling logic here
+            
+            if (!await connectWallet()) {
+                return;
+            }
+
             const ethAmount = document.getElementById('eth-amount').value;
             const lockPeriod = document.getElementById('lock-period').value;
-            console.log('Donation submitted:', { ethAmount, lockPeriod });
-            closeModal();
+
+            try {
+                // Convert ETH to Wei
+                const weiAmount = ethers.utils.parseEther(ethAmount.toString());
+                
+                // Call the contract's donate function
+                const tx = await contract.donate(lockPeriod, {
+                    value: weiAmount
+                });
+
+                showStatus('Processing transaction...');
+                
+                // Wait for transaction to be mined
+                await tx.wait();
+                
+                showStatus('Donation successful!');
+                
+                setTimeout(closeModal, 2000);
+            } catch (error) {
+                showStatus(error.message, true);
+            }
         });
     </script>
 </body>

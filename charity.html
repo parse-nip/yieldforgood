@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Donate - Yield For Good</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f8f9fa;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .logo img {
+            height: 60px;
+        }
+
+        .nav {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .donate-btn {
+            background-color: #1a1a1a;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            text-decoration: none;
+        }
+
+        .charities-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        .charity-card {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid #eee;
+        }
+
+        .charity-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .charity-card img {
+            width: 120px;
+            height: 120px;
+            object-fit: contain;
+            margin-bottom: 20px;
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            position: relative;
+        }
+
+        .close-modal {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .input-group {
+            margin: 20px 0;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #666;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .submit-btn {
+            background-color: #666;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+
+        .submit-btn:hover {
+            background-color: #555;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">
+            <img src="logo.png" alt="Yield For Good">
+        </div>
+        <nav class="nav">
+            <a href="#about">About</a>
+            <a href="#" class="donate-btn">DONATE NOW</a>
+        </nav>
+    </header>
+
+    <div class="charities-grid">
+        <div class="charity-card" onclick="openModal('WWF')">
+            <img src="panda-logo.png" alt="WWF">
+            <h3>WWF</h3>
+            <p>World Wildlife Fund</p>
+        </div>
+        <!-- Add more charity cards as needed -->
+    </div>
+
+    <!-- Donation Modal -->
+    <div class="modal" id="donationModal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal()">&times;</span>
+            <h2 id="modalTitle">Donate to Charity</h2>
+            <form id="donationForm">
+                <div class="input-group">
+                    <label for="eth-amount">Donation Amount (ETH)</label>
+                    <input type="number" id="eth-amount" step="0.001" placeholder="0.003" required>
+                </div>
+
+                <div class="input-group">
+                    <label for="lock-period">Lock Period (Seconds)</label>
+                    <input type="number" id="lock-period" placeholder="604800" required>
+                </div>
+
+                <button type="submit" class="submit-btn">Confirm Donation</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openModal(charityName) {
+            const modal = document.getElementById('donationModal');
+            const modalTitle = document.getElementById('modalTitle');
+            modalTitle.textContent = `Donate to ${charityName}`;
+            modal.classList.add('active');
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('donationModal');
+            modal.classList.remove('active');
+        }
+
+        // Close modal if clicking outside the content
+        document.getElementById('donationModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        document.getElementById('donationForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            // Add your donation handling logic here
+            const ethAmount = document.getElementById('eth-amount').value;
+            const lockPeriod = document.getElementById('lock-period').value;
+            console.log('Donation submitted:', { ethAmount, lockPeriod });
+            closeModal();
+        });
+    </script>
+</body>
+</html>

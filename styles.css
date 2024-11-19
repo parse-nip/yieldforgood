@@ -1,0 +1,103 @@
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background-color: #f8f9fa;
+  color: #333;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  background-color: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.header-left h1 {
+  font-size: 1.5em;
+}
+
+.logo-highlight {
+  color: #555;
+}
+
+.header-right nav {
+  display: flex;
+  gap: 15px;
+}
+
+.nav a {
+  text-decoration: none;
+  color: #333;
+}
+
+.btn {
+  background-color: #333;
+  color: #fff;
+  padding: 10px 20px;
+  border: none;
+  text-decoration: none;
+  font-size: 1em;
+  cursor: pointer;
+}
+
+.hero {
+  text-align: center;
+  padding: 50px 20px;
+  background-color: #fff;
+}
+
+.stats {
+  display: flex;
+  justify-content: center;
+  gap: 50px;
+  padding: 20px 0;
+  background-color: #f0f4f8;
+}
+
+.stats div {
+  text-align: center;
+}
+
+.stats h3 {
+  margin: 0;
+  font-size: 2em;
+}
+
+.marquee {
+  overflow: hidden;
+  background-color: #e9ecef;
+  padding: 20px 0;
+}
+
+.marquee-content {
+  display: flex;
+  gap: 50px;
+  animation: marquee 10s linear infinite;
+}
+
+.marquee-content img {
+  height: 50px;
+}
+
+@keyframes marquee {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
+.info {
+  text-align: center;
+  padding: 50px 20px;
+}
+
+.flowchart img {
+  max-width: 100%;
+  height: auto;
+  margin: 20px 0;
+}
+
+.btn {
+  display: inline-block;
+  text-align: center;
+}

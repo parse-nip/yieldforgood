@@ -6,8 +6,134 @@
     <title>Donate - Yield For Good</title>
     <script src="https://unpkg.com/ethers@5.7.2/dist/ethers.umd.min.js"></script>
     <style>
-        /* Styles same as previous code */
-        /* Modal styling for error messages */
+        /* General Styles */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+        }
+
+        .header {
+            background: #222;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+        }
+
+        .header .logo img {
+            height: 40px;
+        }
+
+        .nav a, .withdraw-btn {
+            color: white;
+            text-decoration: none;
+            margin: 0 10px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .donate-btn {
+            background-color: #00aaff;
+            padding: 10px 20px;
+            border-radius: 5px;
+        }
+
+        .withdraw-btn {
+            background-color: #ff6347;
+            padding: 10px 20px;
+            border-radius: 5px;
+        }
+
+        .charities-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            justify-items: center;
+            margin: 20px;
+        }
+
+        .charity-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            cursor: pointer;
+            max-width: 300px;
+        }
+
+        .charity-card img {
+            width: 100px;
+            margin-bottom: 15px;
+        }
+
+        /* Modal Styles (Deposit) */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            text-align: center;
+            position: relative;
+        }
+
+        .close-modal {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .submit-btn {
+            background-color: #00aaff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        /* Modal Styles (Error) */
         .modal-error {
             display: none;
             position: fixed;
@@ -181,27 +307,16 @@
             if (!await connectWallet()) return;
 
             const amount = document.getElementById('eth-amount').value;
-            const lockTime = document.getElementById('lock-period').value;
+            const lockPeriod = document.getElementById('lock-period').value;
 
             try {
-                const tx = await contract.deposit(lockTime, { value: ethers.utils.parseEther(amount) });
+                const tx = await contract.deposit(lockPeriod, { value: ethers.utils.parseEther(amount) });
                 alert('Processing donation...');
                 await tx.wait();
                 alert('Donation successful!');
+                closeModal();
             } catch (error) {
                 showErrorModal(error.message);
-            }
-        });
-
-        document.getElementById('donationModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeModal();
-            }
-        });
-
-        document.getElementById('errorModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeErrorModal();
             }
         });
     </script>

@@ -23,10 +23,6 @@
             padding: 20px 50px;
         }
 
-        .logo {
-            text-decoration: none;
-        }
-
         .logo img {
             height: 60px;
             width: auto;
@@ -38,13 +34,7 @@
             align-items: center;
         }
 
-        #stats {
-            margin-right: 20px;
-            font-size: 14px;
-            color: #666;
-        }
-
-        .donate-btn, .withdraw-btn {
+        .donate-btn {
             background-color: #1a1a1a;
             color: white;
             padding: 10px 20px;
@@ -52,10 +42,6 @@
             border-radius: 5px;
             cursor: pointer;
             text-decoration: none;
-        }
-
-        .withdraw-btn {
-            background-color: #666;
         }
 
         .hero {
@@ -163,27 +149,56 @@
             width: 100%;
         }
     </style>
+    <script>
+        async function updateStats() {
+            // Connect to Web3
+            if (typeof window.ethereum !== 'undefined') {
+                const Web3 = window.Web3;
+                const web3 = new Web3(window.ethereum);
+                
+                try {
+                    // Contract ABI and address would go here
+                    const contractABI = ["function fetchYieldAmount external view returns (uint256)"]; // contract ABI
+                    const contractAddress = "0xd9582a10448fA9eC8f816782664e97051B0Fd931";
+                    const contract = new web3.eth.Contract(contractABI, contractAddress);
+
+                    // Get total amount deposited
+                    const totalAmount = await contract.methods.totalAmount().call();
+                    document.getElementById('totalDeposited').innerText = 
+                        '$' + (totalAmount / 1e18).toLocaleString();
+
+                    // Get yield generated
+                    const yieldAmount = await contract.methods.fetchYieldAmount().call();
+                    document.getElementById('yieldGenerated').innerText = 
+                        '$' + (yieldAmount / 1e18).toLocaleString();
+
+                } catch (error) {
+                    console.error("Error fetching data:", error);
+                }
+            }
+        }
+
+        // Update stats when page loads
+        window.addEventListener('load', updateStats);
+        // Update stats every 30 seconds
+        setInterval(updateStats, 30000);
+    </script>
 </head>
 <body>
     <header class="header">
-        <a href="index.html" class="logo">
+        <div class="logo">
             <img src="logo.png" alt="Yield For Good">
-        </a>
+        </div>
         <nav class="nav">
-            <div id="stats">
-                <div>Total Deposited: <span id="totalDeposited">Loading...</span></div>
-                <div>Yield Generated: <span id="yieldGenerated">Loading...</span></div>
-            </div>
             <a href="#about">About</a>
-            <a href="#" class="donate-btn" onclick="openModal('Yield For Good')">DONATE NOW</a>
-            <button onclick="withdrawFunds()" class="withdraw-btn">WITHDRAW</button>
+            <a href="/yieldforgoodwebsite/charity.html" class="donate-btn">DONATE NOW</a>
         </nav>
     </header>
 
     <section class="hero">
         <h1>The World's First No-loss Charity</h1>
         <p>Introducing the world's first no-loss charity, built on Blast.</p>
-        <a href="#" class="donate-btn" onclick="openModal('Yield For Good')">GET STARTED</a>
+        <a href="/yieldforgoodwebsite/charity.html" class="donate-btn">GET STARTED</a>
     </section>
 
     <section class="stats">
@@ -192,19 +207,21 @@
             <div class="stat-label">Charities Supported</div>
         </div>
         <div class="stat-item">
-            <div id="yieldGeneratedStat" class="stat-number">Loading...</div>
+            <div id="yieldGenerated" class="stat-number">$0</div>
             <div class="stat-label">Amount Donated</div>
         </div>
         <div class="stat-item">
-            <div id="totalDepositedStat" class="stat-number">Loading...</div>
+            <div id="totalDeposited" class="stat-number">$0</div>
             <div class="stat-label">Amount Deposited</div>
         </div>
     </section>
 
+</body>
+</html>
     <div class="marquee-container">
         <div class="marquee-track">
+            <!-- First set of items -->
             <div class="marquee-content">
-                <!-- First set of items -->
                 <div class="marquee-item"><img src="panda-logo.png" alt="WWF"></div>
                 <div class="marquee-item"><img src="panda-logo.png" alt="WWF"></div>
                 <div class="marquee-item"><img src="panda-logo.png" alt="WWF"></div>
@@ -218,8 +235,8 @@
                 <div class="marquee-item"><img src="panda-logo.png" alt="WWF"></div>
                 <div class="marquee-item"><img src="panda-logo.png" alt="WWF"></div>
             </div>
+            <!-- Duplicate set for seamless loop -->
             <div class="marquee-content">
-                <!-- Duplicate set for seamless loop -->
                 <div class="marquee-item"><img src="panda-logo.png" alt="WWF"></div>
                 <div class="marquee-item"><img src="panda-logo.png" alt="WWF"></div>
                 <div class="marquee-item"><img src="panda-logo.png" alt="WWF"></div>
@@ -245,67 +262,5 @@
         <p>It's that simple. No strings attached or fees taken. Yield for Good is and always will be a nonprofit, operating for nothing more than the greater good.</p>
         <a href="https://yieldforgood.gitbook.io/yield-for-good" class="donate-btn">LEARN MORE</a>
     </section>
-
-    <script>
-        let contract;
-        const contractABI = [
-            "function deposit(uint256 lockTime) payable external nonReentrant",
-            "function withdraw() external nonReentrant",
-            "function totalAmount() external view returns (uint256)",
-            "function fetchYieldAmount() external view returns (uint256)"
-        ];
-        const contractAddress = "0xd9582a10448fA9eC8f816782664e97051B0Fd931";
-
-        async function updateStats() {
-            try {
-                if (!contract) {
-                    const provider = new ethers.providers.Web3Provider(window.ethereum);
-                    contract = new ethers.Contract(contractAddress, contractABI, provider);
-                }
-
-                const totalAmount = await contract.totalAmount();
-                const yieldAmount = await contract.fetchYieldAmount();
-
-                const totalFormatted = ethers.utils.formatEther(totalAmount);
-                const yieldFormatted = ethers.utils.formatEther(yieldAmount);
-
-                // Update header stats
-                document.getElementById('totalDeposited').innerText = totalFormatted + ' ETH';
-                document.getElementById('yieldGenerated').innerText = yieldFormatted + ' ETH';
-
-                // Update main stats section
-                document.getElementById('totalDepositedStat').innerText = totalFormatted + ' ETH';
-                document.getElementById('yieldGeneratedStat').innerText = yieldFormatted + ' ETH';
-            } catch (error) {
-                console.error("Error fetching stats:", error);
-            }
-        }
-
-        async function withdrawFunds() {
-            try {
-                if (!contract) {
-                    const provider = new ethers.providers.Web3Provider(window.ethereum);
-                    const signer = provider.getSigner();
-                    contract = new ethers.Contract(contractAddress, contractABI, signer);
-                }
-                
-                const tx = await contract.withdraw();
-                await tx.wait();
-                await updateStats();
-            } catch (error) {
-                console.error("Error withdrawing funds:", error);
-            }
-        }
-
-        window.addEventListener('load', async function() {
-            if (typeof window.ethers === 'undefined') {
-                console.error('Ethers library not loaded');
-            } else {
-                console.log('Ethers library loaded successfully');
-                await updateStats();
-                setInterval(updateStats, 30000);
-            }
-        });
-    </script>
 </body>
 </html>

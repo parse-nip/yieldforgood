@@ -178,36 +178,7 @@
     let web3;
     let contract;
     const contractAddress = "0xd9582a10448fA9eC8f816782664e97051B0Fd931";
-    const contractABI = [
-        {
-            "inputs": [],
-            "name": "totalAmount",
-            "outputs": [{"type": "uint256"}],
-            "stateMutability": "view",
-            "type": "function"
-        },
-        {
-            "inputs": [],
-            "name": "fetchYieldAmount",
-            "outputs": [{"type": "uint256"}],
-            "stateMutability": "view",
-            "type": "function"
-        },
-        {
-            "inputs": [{"type": "uint256","name": "lockTime"}],
-            "name": "deposit",
-            "outputs": [],
-            "stateMutability": "payable",
-            "type": "function"
-        },
-        {
-            "inputs": [],
-            "name": "withdraw",
-            "outputs": [],
-            "stateMutability": "nonpayable",
-            "type": "function"
-        }
-    ];
+    const contractABI = ["function fetchYieldAmount() external view returns (uint256)"];
 
     async function initWeb3() {
         if (window.ethereum) {

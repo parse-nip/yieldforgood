@@ -94,13 +94,13 @@
 
         .marquee-track {
             display: flex;
-            width: calc(100px * 24);
+            width: calc(100px * 24); /* Width of logo * number of logos */
             animation: scroll 20s linear infinite;
         }
 
         @keyframes scroll {
             0% { transform: translateX(0); }
-            100% { transform: translateX(calc(-100px * 12)); }
+            100% { transform: translateX(calc(-100px * 12)); } /* Half of total width */
         }
 
         .marquee-content {
@@ -149,103 +149,16 @@
             width: 100%;
         }
 
-        /* Mobile responsiveness */
-        @media (max-width: 768px) {
-            .header {
-                padding: 20px;
-                flex-direction: column;
-                gap: 20px;
-            }
-
-            .hero h1 {
-                font-size: 36px;
-            }
-
-            .stats {
-                flex-direction: column;
-                gap: 40px;
-            }
-
-            .stat-item {
-                padding: 0 20px;
-            }
+        .loading {
+            opacity: 0.5;
+        }
+    
+        .error {
+            color: red;
+            font-size: 14px;
+            margin-top: 5px;
         }
     </style>
-    <!-- Web3 and Ethereum dependencies -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.8.2/web3.min.js"></script>
-    <script src="https://cdn.ethers.io/lib/ethers-5.7.2.umd.min.js" type="application/javascript"></script>
-<script>
-    let web3;
-    let contract;
-    const contractAddress = "0xd9582a10448fA9eC8f816782664e97051B0Fd931";
-    const contractABI = ["function fetchYieldAmount() external view returns (uint256)"];
-
-    async function initWeb3() {
-        if (window.ethereum) {
-            try {
-                await window.ethereum.request({ method: 'eth_requestAccounts' });
-                web3 = new Web3(window.ethereum);
-                contract = new web3.eth.Contract(contractABI, contractAddress);
-                return true;
-            } catch (error) {
-                console.error("User denied account access:", error);
-                return false;
-            }
-        } else if (window.web3) {
-            web3 = new Web3(window.web3.currentProvider);
-            contract = new web3.eth.Contract(contractABI, contractAddress);
-            return true;
-        } else {
-            console.log('Non-Ethereum browser detected. Consider installing MetaMask!');
-            return false;
-        }
-    }
-
-async function updateStats() {
-  try {
-    if (!web3) {
-      const initialized = await initWeb3();
-      if (!initialized) {
-        setDefaultValues();
-        return;
-      }
-    }
-
-    const totalAmount = await contract.methods.totalAmount().call();
-    console.log("Total Amount:", totalAmount);
-    document.getElementById('totalDeposited').innerText = web3.utils.fromWei(totalAmount, 'ether') + ' ETH';
-
-    const yieldAmount = await contract.methods.fetchYieldAmount().call();
-    console.log("Yield Amount:", yieldAmount);
-    document.getElementById('yieldGenerated').innerText = web3.utils.fromWei(yieldAmount, 'ether') + ' ETH';
-  } catch (error) {
-    console.error("Error updating stats:", error);
-    setDefaultValues();
-  }
-}
-
-
-    
-    function setDefaultValues() {
-        document.getElementById('totalDeposited').innerText = '0 ETH';
-        document.getElementById('yieldGenerated').innerText = '0 ETH';
-    }
-
-    // Initialize when page loads
-    window.addEventListener('load', async () => {
-        await updateStats();
-        // Update stats every 30 seconds
-        setInterval(updateStats, 30000);
-    });
-
-    // Listen for account changes
-    if (window.ethereum) {
-        window.ethereum.on('accountsChanged', updateStats);
-        window.ethereum.on('chainChanged', () => {
-            window.location.reload();
-        });
-    }
-</script>
 </head>
 <body>
     <header class="header">
@@ -254,7 +167,7 @@ async function updateStats() {
         </div>
         <nav class="nav">
             <a href="#about">About</a>
-            <a href="/yieldforgoodwebsite/charity.html" class="donate-btn">DONATE NOW</a>
+            <a href="/yieldforgoodwebsite/#" class="donate-btn">DONATE NOW</a>
         </nav>
     </header>
 
@@ -266,16 +179,18 @@ async function updateStats() {
 
     <section class="stats">
         <div class="stat-item">
-            <div class="stat-number">12</div>
+            <div class="stat-number" id="charitiesNumber">12</div>
             <div class="stat-label">Charities Supported</div>
         </div>
         <div class="stat-item">
-            <div id="yieldGenerated" class="stat-number">$0</div>
+            <div class="stat-number" id="yieldAmount">Loading...</div>
             <div class="stat-label">Amount Donated</div>
+            <div class="error" id="yieldError"></div>
         </div>
         <div class="stat-item">
-            <div id="totalDeposited" class="stat-number">$0</div>
+            <div class="stat-number" id="totalAmount">Loading...</div>
             <div class="stat-label">Amount Deposited</div>
+            <div class="error" id="totalError"></div>
         </div>
     </section>
 
@@ -321,7 +236,87 @@ async function updateStats() {
             <img src="flowchart.png" alt="Process Flowchart">
         </div>
         <p>It's that simple. No strings attached or fees taken. Yield for Good is and always will be a nonprofit, operating for nothing more than the greater good.</p>
-        <a href="https://yieldforgood.gitbook.io/yield-for-good" class="donate-btn">LEARN MORE</a>
+        <a href="/yieldforgoodwebsite/charity.html" class="donate-btn">DONATE NOW</a>
     </section>
+
+    <script src="https://cdn.ethers.io/lib/ethers-5.7.2.umd.min.js" type="application/javascript"></script>
+    <script>
+        const CONTRACT_ADDRESS = '0xd9582a10448fA9eC8f816782664e97051B0Fd931';
+        const CONTRACT_ABI = [
+            {
+                "inputs": [],
+                "name": "fetchYieldAmount",
+                "outputs": [{"type": "uint256"}],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "totalAmount",
+                "outputs": [{"type": "uint256"}],
+                "stateMutability": "view",
+                "type": "function"
+            }
+        ];
+
+        async function connectContract() {
+            try {
+                // Connect to provider (assuming Ethereum mainnet)
+                const provider = new ethers.providers.Web3Provider(window.ethereum);
+                
+                // Create contract instance
+                const contract = new ethers.Contract(
+                    CONTRACT_ADDRESS,
+                    CONTRACT_ABI,
+                    provider
+                );
+
+                return contract;
+            } catch (error) {
+                console.error('Error connecting to contract:', error);
+                return null;
+            }
+        }
+
+        function formatAmount(amount) {
+            // Convert from wei to ether and format with 2 decimal places
+            return parseFloat(ethers.utils.formatEther(amount)).toFixed(2);
+        }
+
+        async function updateStats() {
+            const contract = await connectContract();
+            if (!contract) {
+                document.getElementById('yieldError').textContent = 'Unable to connect to blockchain';
+                document.getElementById('totalError').textContent = 'Unable to connect to blockchain';
+                return;
+            }
+
+            try {
+                // Fetch yield amount
+                const yieldAmount = await contract.fetchYieldAmount();
+                document.getElementById('yieldAmount').textContent = 
+                    '$' + formatAmount(yieldAmount);
+            } catch (error) {
+                document.getElementById('yieldError').textContent = 
+                    'Error fetching yield amount';
+            }
+
+            try {
+                // Fetch total amount
+                const totalAmount = await contract.totalAmount();
+                document.getElementById('totalAmount').textContent = 
+                    '$' + formatAmount(totalAmount);
+            } catch (error) {
+                document.getElementById('totalError').textContent = 
+                    'Error fetching total amount';
+            }
+        }
+
+        // Update stats when page loads
+        window.addEventListener('load', updateStats);
+
+        // Update stats every 30 seconds
+        setInterval(updateStats, 30000);
+    </script>
 </body>
 </html>

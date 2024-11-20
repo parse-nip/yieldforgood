@@ -218,8 +218,8 @@
     <script>
         // Previous JavaScript remains exactly the same
         const contractABI = [
-            "function donate(uint256 lockPeriod) public payable",
-            "function withdraw() public"
+            "function deposit(uint256 lockTime) payable external nonReentrant",
+            "function withdraw() external nonReetrant"
         ];
 
         const contractAddress = "YOUR_CONTRACT_ADDRESS";

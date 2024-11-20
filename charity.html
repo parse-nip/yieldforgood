@@ -6,7 +6,7 @@
     <title>Donate - Yield For Good</title>
     <script src="https://cdn.ethers.io/lib/ethers-5.7.2.umd.min.js" type="application/javascript"></script>
     <style>
-        /* Previous CSS remains exactly the same */
+        /* All previous CSS remains exactly the same */
         * {
             margin: 0;
             padding: 0;
@@ -187,10 +187,10 @@
     </header>
 
     <div class="charities-grid">
-        <div class="charity-card" onclick="openModal('WWF')">
-            <img src="panda-logo.png" alt="WWF">
-            <h3>WWF</h3>
-            <p>World Wildlife Fund</p>
+        <div class="charity-card" onclick="openModal('Yield For Good')">
+            <img src="logo.png" alt="Yield For Good">
+            <h3>Yield For Good</h3>
+            <p>Empowering Change Through Yield</p>
         </div>
     </div>
 
@@ -216,13 +216,12 @@
     </div>
 
     <script>
-        // Contract ABI - Replace with your actual contract ABI
+        // Previous JavaScript remains exactly the same
         const contractABI = [
             "function donate(uint256 lockPeriod) public payable",
             "function withdraw() public"
         ];
 
-        // Contract address - Replace with your actual contract address
         const contractAddress = "YOUR_CONTRACT_ADDRESS";
 
         let selectedCharity = '';

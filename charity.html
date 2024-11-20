@@ -4,10 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Donate - Yield For Good</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js" 
-        integrity="sha512-FzdR15dZi/SSmzNz6I/sRy0GOLIoGPN9ZhIzcmO0VWr43YxfCI2+VyX3J5sOSzpvF2WMWt4Lvv7mHLUXBQtrw==" 
-        crossorigin="anonymous" 
-        referrerpolicy="no-referrer"></script>
+    <!-- Changed to ethers v5.7.2 CDN that exports global ethers object -->
+    <script src="https://cdn.ethers.io/lib/ethers-5.7.2.umd.min.js" type="application/javascript"></script>
     <style>
         * {
             margin: 0;
@@ -183,7 +181,7 @@
         </a>
         <nav class="nav">
             <a href="#about">About</a>
-            <a href="#" class="donate-btn">DONATE NOW</a>
+            <a href="#" class="donate-btn" onclick="openModal('Yield For Good')">DONATE NOW</a>
             <button onclick="withdrawFunds()" class="withdraw-btn">WITHDRAW</button>
         </nav>
     </header>
@@ -218,116 +216,100 @@
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const contractABI = [
-                "function deposit(uint256 lockTime) payable external nonReentrant",
-                "function withdraw() external nonReetrant"
-            ];
+        let contract;
+        let signer;
 
-            const contractAddress = "0xd9582a10448fA9eC8f816782664e97051B0Fd931";
+        const contractABI = [
+            "function deposit(uint256 lockTime) payable external nonReentrant",
+            "function withdraw() external nonReentrant"
+        ];
+        const contractAddress = "0xd9582a10448fA9eC8f816782664e97051B0Fd931";
 
-            let selectedCharity = '';
-            let contract;
-            let signer;
-
-            async function connectWallet() {
-                try {
-                    if (typeof window.ethereum === 'undefined') {
-                        throw new Error('Please install MetaMask to use this feature');
-                    }
-
-                    await window.ethereum.request({ method: 'eth_requestAccounts' });
-                    
-                    const provider = new ethers.providers.Web3Provider(window.ethereum);
-                    signer = provider.getSigner();
-                    
-                    contract = new ethers.Contract(contractAddress, contractABI, signer);
-                    
-                    return true;
-                } catch (error) {
-                    showStatus(error.message, true);
-                    return false;
+        async function connectWallet() {
+            try {
+                if (typeof window.ethereum === 'undefined') {
+                    throw new Error('Please install MetaMask to use this feature');
                 }
-            }
 
-            async function withdrawFunds() {
-                try {
-                    if (!await connectWallet()) {
-                        return;
-                    }
-
-                    const tx = await contract.withdraw();
-                    showStatus('Processing withdrawal...');
-                    
-                    await tx.wait();
-                    showStatus('Withdrawal successful!');
-                } catch (error) {
-                    showStatus(error.message, true);
-                }
-            }
-
-            function openModal(charityName) {
-                selectedCharity = charityName;
-                const modal = document.getElementById('donationModal');
-                const modalTitle = document.getElementById('modalTitle');
-                modalTitle.textContent = `Donate to ${charityName}`;
-                modal.classList.add('active');
-            }
-
-            function closeModal() {
-                const modal = document.getElementById('donationModal');
-                modal.classList.remove('active');
-                document.getElementById('status-message').style.display = 'none';
-            }
-
-            function showStatus(message, isError = false) {
-                const statusElement = document.getElementById('status-message');
-                statusElement.textContent = message;
-                statusElement.className = isError ? 'error' : 'success';
-                statusElement.style.display = 'block';
-            }
-
-            document.getElementById('donationModal').addEventListener('click', function(e) {
-                if (e.target === this) {
-                    closeModal();
-                }
-            });
-
-            document.getElementById('donationForm').addEventListener('submit', async function(e) {
-                e.preventDefault();
+                await window.ethereum.request({ method: 'eth_requestAccounts' });
                 
-                if (!await connectWallet()) {
-                    return;
-                }
+                const provider = new ethers.providers.Web3Provider(window.ethereum);
+                signer = provider.getSigner();
+                
+                contract = new ethers.Contract(contractAddress, contractABI, signer);
+                
+                return true;
+            } catch (error) {
+                showStatus(error.message, true);
+                return false;
+            }
+        }
 
-                const ethAmount = document.getElementById('eth-amount').value;
-                const lockPeriod = document.getElementById('lock-period').value;
+        async function withdrawFunds() {
+            try {
+                if (!await connectWallet()) return;
 
-                try {
-                    const weiAmount = ethers.utils.parseEther(ethAmount.toString());
-                    
-                    const tx = await contract.deposit(lockPeriod, {
-                        value: weiAmount
-                    });
+                const tx = await contract.withdraw();
+                showStatus('Processing withdrawal...');
+                
+                await tx.wait();
+                showStatus('Withdrawal successful!');
+            } catch (error) {
+                showStatus(error.message, true);
+            }
+        }
 
-                    showStatus('Processing transaction...');
-                    
-                    await tx.wait();
-                    
-                    showStatus('Donation successful!');
-                    
-                    setTimeout(closeModal, 2000);
-                } catch (error) {
-                    showStatus(error.message, true);
-                }
-            });
+        function openModal(charityName) {
+            const modal = document.getElementById('donationModal');
+            const modalTitle = document.getElementById('modalTitle');
+            modalTitle.textContent = `Donate to ${charityName}`;
+            modal.classList.add('active');
+        }
 
-            // Make functions globally accessible
-            window.connectWallet = connectWallet;
-            window.withdrawFunds = withdrawFunds;
-            window.openModal = openModal;
-            window.closeModal = closeModal;
-            window.showStatus = showStatus;
+        function closeModal() {
+            const modal = document.getElementById('donationModal');
+            modal.classList.remove('active');
+            document.getElementById('status-message').style.display = 'none';
+        }
+
+        function showStatus(message, isError = false) {
+            const statusElement = document.getElementById('status-message');
+            statusElement.textContent = message;
+            statusElement.className = isError ? 'error' : 'success';
+            statusElement.style.display = 'block';
+        }
+
+        document.getElementById('donationModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        document.getElementById('donationForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            if (!await connectWallet()) return;
+
+            const ethAmount = document.getElementById('eth-amount').value;
+            const lockPeriod = document.getElementById('lock-period').value;
+
+            try {
+                const weiAmount = ethers.utils.parseEther(ethAmount.toString());
+                
+                const tx = await contract.deposit(lockPeriod, {
+                    value: weiAmount
+                });
+
+                showStatus('Processing transaction...');
+                
+                await tx.wait();
+                
+                showStatus('Donation successful!');
+                
+                setTimeout(closeModal, 2000);
+            } catch (error) {
+                showStatus(error.message, true);
+            }
         });
     </script>
 </body>

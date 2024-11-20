@@ -7,7 +7,6 @@
     <!-- Load ethers from UNPKG CDN -->
     <script src="https://unpkg.com/ethers@5.7.2/dist/ethers.umd.min.js"></script>
     <style>
-        /* Previous CSS remains exactly the same */
         * {
             margin: 0;
             padding: 0;
@@ -173,10 +172,55 @@
             background-color: #e6ffe6;
             color: #008000;
         }
+
+        .notification {
+            display: none;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 20px;
+            border-radius: 8px;
+            background: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1000;
+            max-width: 350px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .notification.error {
+            border-left: 4px solid #ff0000;
+        }
+
+        .notification.success {
+            border-left: 4px solid #008000;
+        }
+
+        .notification-content {
+            margin-right: 20px;
+        }
+
+        .notification-close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            cursor: pointer;
+            font-size: 18px;
+            color: #666;
+        }
     </style>
 </head>
 <body>
-    <!-- Previous HTML remains exactly the same -->
     <header class="header">
         <a href="index.html" class="logo">
             <img src="logo.png" alt="Yield For Good">
@@ -217,9 +261,23 @@
         </div>
     </div>
 
+    <div id="notification" class="notification">
+        <span class="notification-close" onclick="closeNotification()">&times;</span>
+        <div class="notification-content" id="notification-message"></div>
+    </div>
 
     <script>
-        // Previous initial code remains the same
+        window.addEventListener('load', function() {
+            if (typeof window.ethers === 'undefined') {
+                console.error('Ethers library not loaded');
+            } else {
+                console.log('Ethers library loaded successfully');
+            }
+        });
+
+        let contract;
+        let signer;
+
         const contractABI = [
             "function deposit(uint256 lockTime) payable external nonReentrant",
             "function withdraw() external nonReentrant",
@@ -243,9 +301,26 @@
                 
                 return true;
             } catch (error) {
-                showStatus(error.message, true);
+                showNotification(error.message, true);
                 return false;
             }
+        }
+
+        function showNotification(message, isError = false) {
+            const notification = document.getElementById('notification');
+            const messageElement = document.getElementById('notification-message');
+            
+            notification.className = 'notification ' + (isError ? 'error' : 'success');
+            messageElement.textContent = message;
+            notification.style.display = 'block';
+
+            // Auto hide after 5 seconds
+            setTimeout(closeNotification, 5000);
+        }
+
+        function closeNotification() {
+            const notification = document.getElementById('notification');
+            notification.style.display = 'none';
         }
 
         async function withdrawFunds() {
@@ -270,16 +345,15 @@
                 }
 
                 const tx = await contract.withdraw();
-                showStatus('Processing withdrawal...');
+                showNotification('Processing withdrawal...');
                 
                 await tx.wait();
-                showStatus('Withdrawal successful!');
+                showNotification('Withdrawal successful!');
             } catch (error) {
-                showStatus(error.message, true);
+                showNotification(error.message, true);
             }
         }
 
-        // All other previous functions remain exactly the same
         function openModal(charityName) {
             const modal = document.getElementById('donationModal');
             const modalTitle = document.getElementById('modalTitle');
@@ -291,13 +365,6 @@
             const modal = document.getElementById('donationModal');
             modal.classList.remove('active');
             document.getElementById('status-message').style.display = 'none';
-        }
-
-        function showStatus(message, isError = false) {
-            const statusElement = document.getElementById('status-message');
-            statusElement.textContent = message;
-            statusElement.className = isError ? 'error' : 'success';
-            statusElement.style.display = 'block';
         }
 
         document.getElementById('donationModal').addEventListener('click', function(e) {
@@ -321,18 +388,17 @@
                     value: weiAmount
                 });
 
-                showStatus('Processing transaction...');
+                showNotification('Processing transaction...');
                 
                 await tx.wait();
                 
-                showStatus('Donation successful!');
+                showNotification('Donation successful!');
                 
                 setTimeout(closeModal, 2000);
             } catch (error) {
-                showStatus(error.message, true);
+                showNotification(error.message, true);
             }
         });
     </script>
-
 </body>
 </html>

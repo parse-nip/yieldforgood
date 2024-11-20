@@ -238,10 +238,8 @@
         <p>It's that simple. No strings attached or fees taken. Yield for Good is and always will be a nonprofit, operating for nothing more than the greater good.</p>
         <a href="/yieldforgoodwebsite/charity.html" class="donate-btn">DONATE NOW</a>
     </section>
-
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
     <script>
-        // Wait for the ethers library to load
         window.addEventListener('DOMContentLoaded', async () => {
             const CONTRACT_ADDRESS = '0xd9582a10448fA9eC8f816782664e97051B0Fd931';
             const CONTRACT_ABI = [
@@ -263,18 +261,13 @@
 
             async function connectContract() {
                 try {
-                    // Check if ethers is available
                     if (typeof ethers === 'undefined') {
                         throw new Error('Ethers library not loaded');
                     }
 
-                    // Check if MetaMask is installed
-                    if (typeof window.ethereum === 'undefined') {
-                        throw new Error('MetaMask not installed');
-                    }
-
-                    // Connect to provider (assuming Ethereum mainnet)
-                    const provider = new ethers.providers.Web3Provider(window.ethereum);
+                    // Blast network configuration
+                    const blastRPC = "https://rpc.blast.io";
+                    const provider = new ethers.providers.JsonRpcProvider(blastRPC);
                     
                     // Create contract instance
                     const contract = new ethers.Contract(

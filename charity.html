@@ -7,7 +7,6 @@
     <!-- Load ethers from UNPKG CDN -->
     <script src="https://unpkg.com/ethers@5.7.2/dist/ethers.umd.min.js"></script>
     <style>
-        /* Previous CSS remains exactly the same */
         * {
             margin: 0;
             padding: 0;
@@ -176,7 +175,6 @@
     </style>
 </head>
 <body>
-    <!-- Previous HTML remains exactly the same -->
     <header class="header">
         <a href="index.html" class="logo">
             <img src="logo.png" alt="Yield For Good">
@@ -218,7 +216,6 @@
     </div>
 
     <script>
-        // Verify ethers is loaded
         window.addEventListener('load', function() {
             if (typeof window.ethers === 'undefined') {
                 console.error('Ethers library not loaded');
@@ -243,12 +240,12 @@
                 }
 
                 await window.ethereum.request({ method: 'eth_requestAccounts' });
-                
+
                 const provider = new ethers.providers.Web3Provider(window.ethereum);
                 signer = provider.getSigner();
-                
+
                 contract = new ethers.Contract(contractAddress, contractABI, signer);
-                
+
                 return true;
             } catch (error) {
                 showStatus(error.message, true);
@@ -262,11 +259,17 @@
 
                 const tx = await contract.withdraw();
                 showStatus('Processing withdrawal...');
-                
+
                 await tx.wait();
                 showStatus('Withdrawal successful!');
             } catch (error) {
-                showStatus(error.message, true);
+                if (error.message.includes("Funds are still locked")) {
+                    showStatus("Lock time not over. Please wait until your lock time expires.", true);
+                } else if (error.message.includes("no funds to withdraw")) {
+                    showStatus("No funds available to withdraw.", true);
+                } else {
+                    showStatus(error.message, true);
+                }
             }
         }
 
@@ -285,8 +288,9 @@
 
         function showStatus(message, isError = false) {
             const statusElement = document.getElementById('status-message');
-            statusElement.textContent = message;
-            statusElement.className = isError ? 'error' : 'success';
+            statusElement.innerHTML = isError 
+                ? `<span style="color: red; font-weight: bold;">&#x26A0;</span> ${message}`
+                : `<span style="color: green; font-weight: bold;">&#x2714;</span> ${message}`;
             statusElement.style.display = 'block';
         }
 
@@ -298,26 +302,17 @@
 
         document.getElementById('donationForm').addEventListener('submit', async function(e) {
             e.preventDefault();
-            
+
             if (!await connectWallet()) return;
 
-            const ethAmount = document.getElementById('eth-amount').value;
-            const lockPeriod = document.getElementById('lock-period').value;
+            const amount = document.getElementById('eth-amount').value;
+            const lockTime = document.getElementById('lock-period').value;
 
             try {
-                const weiAmount = ethers.utils.parseEther(ethAmount.toString());
-                
-                const tx = await contract.deposit(lockPeriod, {
-                    value: weiAmount
-                });
-
-                showStatus('Processing transaction...');
-                
+                const tx = await contract.deposit(lockTime, { value: ethers.utils.parseEther(amount) });
+                showStatus('Processing donation...');
                 await tx.wait();
-                
                 showStatus('Donation successful!');
-                
-                setTimeout(closeModal, 2000);
             } catch (error) {
                 showStatus(error.message, true);
             }

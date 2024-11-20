@@ -4,116 +4,38 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Donate - Yield For Good</title>
-    <!-- Load ethers from UNPKG CDN -->
     <script src="https://unpkg.com/ethers@5.7.2/dist/ethers.umd.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: Arial, sans-serif;
-        }
-
-        body {
-            background-color: #f8f9fa;
-            padding: 20px;
-        }
-
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px 0;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .logo {
-            cursor: pointer;
-        }
-
-        .logo img {
-            height: 60px;
-        }
-
-        .nav {
-            display: flex;
-            gap: 20px;
-            align-items: center;
-        }
-
-        .donate-btn, .withdraw-btn {
-            background-color: #1a1a1a;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            text-decoration: none;
-            cursor: pointer;
-        }
-
-        .withdraw-btn {
-            background-color: #4a4a4a;
-        }
-
-        .charities-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 20px;
-            max-width: 1200px;
-            margin: 40px auto;
-            padding: 20px;
-        }
-
-        .charity-card {
-            background: white;
-            padding: 30px;
-            border-radius: 8px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            border: 1px solid #eee;
-        }
-
-        .charity-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        }
-
-        .charity-card img {
-            width: 120px;
-            height: 120px;
-            object-fit: contain;
-            margin-bottom: 20px;
-        }
-
-        .modal {
+        /* Styles same as previous code */
+        /* Modal styling for error messages */
+        .modal-error {
             display: none;
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0,0,0,0.5);
+            background-color: rgba(0, 0, 0, 0.5);
             z-index: 1000;
             justify-content: center;
             align-items: center;
         }
 
-        .modal.active {
+        .modal-error.active {
             display: flex;
         }
 
-        .modal-content {
+        .modal-error-content {
             background: white;
             padding: 40px;
             border-radius: 8px;
             width: 90%;
             max-width: 500px;
+            text-align: center;
             position: relative;
         }
 
-        .close-modal {
+        .close-modal-error {
             position: absolute;
             right: 20px;
             top: 20px;
@@ -122,55 +44,11 @@
             color: #666;
         }
 
-        .input-group {
+        .error-message {
+            color: red;
+            font-size: 16px;
             margin: 20px 0;
-        }
-
-        .input-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: #666;
-        }
-
-        .input-group input {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 16px;
-        }
-
-        .submit-btn {
-            background-color: #666;
-            color: white;
-            padding: 15px 30px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            width: 100%;
-            font-size: 16px;
-            margin-top: 20px;
-        }
-
-        .submit-btn:hover {
-            background-color: #555;
-        }
-
-        #status-message {
-            margin-top: 20px;
-            padding: 10px;
-            border-radius: 5px;
-            display: none;
-        }
-
-        .error {
-            background-color: #ffe6e6;
-            color: #ff0000;
-        }
-
-        .success {
-            background-color: #e6ffe6;
-            color: #008000;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -194,6 +72,7 @@
         </div>
     </div>
 
+    <!-- Donation Modal -->
     <div class="modal" id="donationModal">
         <div class="modal-content">
             <span class="close-modal" onclick="closeModal()">&times;</span>
@@ -211,19 +90,19 @@
 
                 <button type="submit" class="submit-btn">Confirm Donation</button>
             </form>
-            <div id="status-message"></div>
+        </div>
+    </div>
+
+    <!-- Error Modal -->
+    <div class="modal-error" id="errorModal">
+        <div class="modal-error-content">
+            <span class="close-modal-error" onclick="closeErrorModal()">&times;</span>
+            <h2>Error</h2>
+            <p id="errorMessage" class="error-message"></p>
         </div>
     </div>
 
     <script>
-        window.addEventListener('load', function() {
-            if (typeof window.ethers === 'undefined') {
-                console.error('Ethers library not loaded');
-            } else {
-                console.log('Ethers library loaded successfully');
-            }
-        });
-
         let contract;
         let signer;
 
@@ -248,7 +127,7 @@
 
                 return true;
             } catch (error) {
-                showStatus(error.message, true);
+                showErrorModal(error.message);
                 return false;
             }
         }
@@ -258,17 +137,16 @@
                 if (!await connectWallet()) return;
 
                 const tx = await contract.withdraw();
-                showStatus('Processing withdrawal...');
-
+                alert('Processing withdrawal...');
                 await tx.wait();
-                showStatus('Withdrawal successful!');
+                alert('Withdrawal successful!');
             } catch (error) {
                 if (error.message.includes("Funds are still locked")) {
-                    showStatus("Lock time not over. Please wait until your lock time expires.", true);
+                    showErrorModal("Lock time not over. Please wait until your lock time expires.");
                 } else if (error.message.includes("no funds to withdraw")) {
-                    showStatus("No funds available to withdraw.", true);
+                    showErrorModal("No funds available to withdraw.");
                 } else {
-                    showStatus(error.message, true);
+                    showErrorModal(error.message);
                 }
             }
         }
@@ -283,22 +161,19 @@
         function closeModal() {
             const modal = document.getElementById('donationModal');
             modal.classList.remove('active');
-            document.getElementById('status-message').style.display = 'none';
         }
 
-        function showStatus(message, isError = false) {
-            const statusElement = document.getElementById('status-message');
-            statusElement.innerHTML = isError 
-                ? `<span style="color: red; font-weight: bold;">&#x26A0;</span> ${message}`
-                : `<span style="color: green; font-weight: bold;">&#x2714;</span> ${message}`;
-            statusElement.style.display = 'block';
+        function showErrorModal(message) {
+            const errorModal = document.getElementById('errorModal');
+            const errorMessage = document.getElementById('errorMessage');
+            errorMessage.textContent = message;
+            errorModal.classList.add('active');
         }
 
-        document.getElementById('donationModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeModal();
-            }
-        });
+        function closeErrorModal() {
+            const errorModal = document.getElementById('errorModal');
+            errorModal.classList.remove('active');
+        }
 
         document.getElementById('donationForm').addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -310,11 +185,23 @@
 
             try {
                 const tx = await contract.deposit(lockTime, { value: ethers.utils.parseEther(amount) });
-                showStatus('Processing donation...');
+                alert('Processing donation...');
                 await tx.wait();
-                showStatus('Donation successful!');
+                alert('Donation successful!');
             } catch (error) {
-                showStatus(error.message, true);
+                showErrorModal(error.message);
+            }
+        });
+
+        document.getElementById('donationModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        document.getElementById('errorModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeErrorModal();
             }
         });
     </script>

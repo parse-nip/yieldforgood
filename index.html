@@ -180,21 +180,31 @@
     const contractAddress = "0xd9582a10448fA9eC8f816782664e97051B0Fd931";
     const contractABI = [
         {
-            "constant": true,
             "inputs": [],
             "name": "totalAmount",
-            "outputs": [{"name": "","type": "uint256"}],
-            "payable": false,
+            "outputs": [{"type": "uint256"}],
             "stateMutability": "view",
             "type": "function"
         },
         {
-            "constant": true,
             "inputs": [],
             "name": "fetchYieldAmount",
-            "outputs": [{"name": "","type": "uint256"}],
-            "payable": false,
+            "outputs": [{"type": "uint256"}],
             "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "inputs": [{"type": "uint256","name": "lockTime"}],
+            "name": "deposit",
+            "outputs": [],
+            "stateMutability": "payable",
+            "type": "function"
+        },
+        {
+            "inputs": [],
+            "name": "withdraw",
+            "outputs": [],
+            "stateMutability": "nonpayable",
             "type": "function"
         }
     ];
@@ -230,15 +240,15 @@
                 }
             }
 
-            // Get total amount deposited
             const totalAmount = await contract.methods.totalAmount().call();
+            console.log("Total Amount:", totalAmount);
             document.getElementById('totalDeposited').innerText = 
-                '$' + (totalAmount / 1e18).toLocaleString();
+                web3.utils.fromWei(totalAmount, 'ether') + ' ETH';
 
-            // Get yield generated
             const yieldAmount = await contract.methods.fetchYieldAmount().call();
+            console.log("Yield Amount:", yieldAmount);
             document.getElementById('yieldGenerated').innerText = 
-                '$' + (yieldAmount / 1e18).toLocaleString();
+                web3.utils.fromWei(yieldAmount, 'ether') + ' ETH';
 
         } catch (error) {
             console.error("Error updating stats:", error);
@@ -247,8 +257,8 @@
     }
 
     function setDefaultValues() {
-        document.getElementById('totalDeposited').innerText = '$0';
-        document.getElementById('yieldGenerated').innerText = '$0';
+        document.getElementById('totalDeposited').innerText = '0 ETH';
+        document.getElementById('yieldGenerated').innerText = '0 ETH';
     }
 
     // Initialize when page loads

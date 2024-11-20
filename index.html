@@ -174,95 +174,98 @@
     <!-- Web3 and Ethereum dependencies -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.8.2/web3.min.js"></script>
     <script src="https://cdn.ethers.io/lib/ethers-5.7.2.umd.min.js" type="application/javascript"></script>
-    <script>
-        let web3;
-        let contract;
-        const contractAddress = "0xd9582a10448fA9eC8f816782664e97051B0Fd931";
-        const contractABI = [
-            {
-                "inputs": [],
-                "name": "totalAmount",
-                "outputs": [{"internalType": "uint256","name": "","type": "uint256"}],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "fetchYieldAmount",
-                "outputs": [{"internalType": "uint256","name": "","type": "uint256"}],
-                "stateMutability": "view",
-                "type": "function"
-            }
-        ];
+<script>
+    let web3;
+    let contract;
+    const contractAddress = "0xd9582a10448fA9eC8f816782664e97051B0Fd931";
+    const contractABI = [
+        {
+            "constant": true,
+            "inputs": [],
+            "name": "totalAmount",
+            "outputs": [{"name": "","type": "uint256"}],
+            "payable": false,
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "constant": true,
+            "inputs": [],
+            "name": "fetchYieldAmount",
+            "outputs": [{"name": "","type": "uint256"}],
+            "payable": false,
+            "stateMutability": "view",
+            "type": "function"
+        }
+    ];
 
-        async function initWeb3() {
-            if (window.ethereum) {
-                try {
-                    // Request account access
-                    await window.ethereum.request({ method: 'eth_requestAccounts' });
-                    web3 = new Web3(window.ethereum);
-                    contract = new web3.eth.Contract(contractABI, contractAddress);
-                    return true;
-                } catch (error) {
-                    console.error("User denied account access:", error);
-                    return false;
-                }
-            } else if (window.web3) {
-                web3 = new Web3(window.web3.currentProvider);
+    async function initWeb3() {
+        if (window.ethereum) {
+            try {
+                await window.ethereum.request({ method: 'eth_requestAccounts' });
+                web3 = new Web3(window.ethereum);
                 contract = new web3.eth.Contract(contractABI, contractAddress);
                 return true;
-            } else {
-                console.log('Non-Ethereum browser detected. Consider installing MetaMask!');
+            } catch (error) {
+                console.error("User denied account access:", error);
                 return false;
             }
+        } else if (window.web3) {
+            web3 = new Web3(window.web3.currentProvider);
+            contract = new web3.eth.Contract(contractABI, contractAddress);
+            return true;
+        } else {
+            console.log('Non-Ethereum browser detected. Consider installing MetaMask!');
+            return false;
         }
+    }
 
-        async function updateStats() {
-            try {
-                if (!web3) {
-                    const initialized = await initWeb3();
-                    if (!initialized) {
-                        setDefaultValues();
-                        return;
-                    }
+    async function updateStats() {
+        try {
+            if (!web3) {
+                const initialized = await initWeb3();
+                if (!initialized) {
+                    setDefaultValues();
+                    return;
                 }
-
-                // Get total amount deposited
-                const totalAmount = await contract.methods.totalAmount().call();
-                document.getElementById('totalDeposited').innerText = 
-                    '$' + (totalAmount / 1e18).toLocaleString();
-
-                // Get yield generated
-                const yieldAmount = await contract.methods.fetchYieldAmount().call();
-                document.getElementById('yieldGenerated').innerText = 
-                    '$' + (yieldAmount / 1e18).toLocaleString();
-
-            } catch (error) {
-                console.error("Error updating stats:", error);
-                setDefaultValues();
             }
-        }
 
-        function setDefaultValues() {
-            document.getElementById('totalDeposited').innerText = '$0';
-            document.getElementById('yieldGenerated').innerText = '$0';
-        }
+            // Get total amount deposited
+            const totalAmount = await contract.methods.totalAmount().call();
+            document.getElementById('totalDeposited').innerText = 
+                '$' + (totalAmount / 1e18).toLocaleString();
 
-        // Initialize when page loads
-        window.addEventListener('load', async () => {
-            await updateStats();
-            // Update stats every 30 seconds
-            setInterval(updateStats, 30000);
+            // Get yield generated
+            const yieldAmount = await contract.methods.fetchYieldAmount().call();
+            document.getElementById('yieldGenerated').innerText = 
+                '$' + (yieldAmount / 1e18).toLocaleString();
+
+        } catch (error) {
+            console.error("Error updating stats:", error);
+            setDefaultValues();
+        }
+    }
+
+    function setDefaultValues() {
+        document.getElementById('totalDeposited').innerText = '$0';
+        document.getElementById('yieldGenerated').innerText = '$0';
+    }
+
+    // Initialize when page loads
+    window.addEventListener('load', async () => {
+        await updateStats();
+        // Update stats every 30 seconds
+        setInterval(updateStats, 30000);
+    });
+
+    // Listen for account changes
+    if (window.ethereum) {
+        window.ethereum.on('accountsChanged', updateStats);
+        window.ethereum.on('chainChanged', () => {
+            window.location.reload();
         });
-
-        // Listen for account changes
-        if (window.ethereum) {
-            window.ethereum.on('accountsChanged', updateStats);
-            window.ethereum.on('chainChanged', () => {
-                window.location.reload();
-            });
-        }
-    </script>
+    }
+</script>
 </head>
 <body>
     <header class="header">

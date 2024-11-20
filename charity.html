@@ -216,119 +216,112 @@
             <div id="status-message"></div>
         </div>
     </div>
+<!-- Keep all the HTML and CSS the same, just replace the script section -->
+<script>
+    const contractABI = [
+        "function deposit(uint256 lockTime) payable external nonReentrant",
+        "function withdraw() external nonReetrant"
+    ];
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const contractABI = [
-                "function deposit(uint256 lockTime) payable external nonReentrant",
-                "function withdraw() external nonReetrant"
-            ];
+    const contractAddress = "0xd9582a10448fA9eC8f816782664e97051B0Fd931";
 
-            const contractAddress = "0xd9582a10448fA9eC8f816782664e97051B0Fd931";
+    let selectedCharity = '';
+    let contract;
+    let signer;
 
-            let selectedCharity = '';
-            let contract;
-            let signer;
-
-            async function connectWallet() {
-                try {
-                    if (typeof window.ethereum === 'undefined') {
-                        throw new Error('Please install MetaMask to use this feature');
-                    }
-
-                    await window.ethereum.request({ method: 'eth_requestAccounts' });
-                    
-                    const provider = new ethers.providers.Web3Provider(window.ethereum);
-                    signer = provider.getSigner();
-                    
-                    contract = new ethers.Contract(contractAddress, contractABI, signer);
-                    
-                    return true;
-                } catch (error) {
-                    showStatus(error.message, true);
-                    return false;
-                }
+    async function connectWallet() {
+        try {
+            if (typeof window.ethereum === 'undefined') {
+                throw new Error('Please install MetaMask to use this feature');
             }
 
-            async function withdrawFunds() {
-                try {
-                    if (!await connectWallet()) {
-                        return;
-                    }
+            await window.ethereum.request({ method: 'eth_requestAccounts' });
+            
+            const provider = new ethers.providers.Web3Provider(window.ethereum);
+            signer = provider.getSigner();
+            
+            contract = new ethers.Contract(contractAddress, contractABI, signer);
+            
+            return true;
+        } catch (error) {
+            showStatus(error.message, true);
+            return false;
+        }
+    }
 
-                    const tx = await contract.withdraw();
-                    showStatus('Processing withdrawal...');
-                    
-                    await tx.wait();
-                    showStatus('Withdrawal successful!');
-                } catch (error) {
-                    showStatus(error.message, true);
-                }
+    async function withdrawFunds() {
+        try {
+            if (!await connectWallet()) {
+                return;
             }
 
-            function openModal(charityName) {
-                selectedCharity = charityName;
-                const modal = document.getElementById('donationModal');
-                const modalTitle = document.getElementById('modalTitle');
-                modalTitle.textContent = `Donate to ${charityName}`;
-                modal.classList.add('active');
+            const tx = await contract.withdraw();
+            showStatus('Processing withdrawal...');
+            
+            await tx.wait();
+            showStatus('Withdrawal successful!');
+        } catch (error) {
+            showStatus(error.message, true);
+        }
+    }
+
+    function openModal(charityName) {
+        selectedCharity = charityName;
+        const modal = document.getElementById('donationModal');
+        const modalTitle = document.getElementById('modalTitle');
+        modalTitle.textContent = `Donate to ${charityName}`;
+        modal.classList.add('active');
+    }
+
+    function closeModal() {
+        const modal = document.getElementById('donationModal');
+        modal.classList.remove('active');
+        document.getElementById('status-message').style.display = 'none';
+    }
+
+    function showStatus(message, isError = false) {
+        const statusElement = document.getElementById('status-message');
+        statusElement.textContent = message;
+        statusElement.className = isError ? 'error' : 'success';
+        statusElement.style.display = 'block';
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('donationModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
             }
-
-            function closeModal() {
-                const modal = document.getElementById('donationModal');
-                modal.classList.remove('active');
-                document.getElementById('status-message').style.display = 'none';
-            }
-
-            function showStatus(message, isError = false) {
-                const statusElement = document.getElementById('status-message');
-                statusElement.textContent = message;
-                statusElement.className = isError ? 'error' : 'success';
-                statusElement.style.display = 'block';
-            }
-
-            document.getElementById('donationModal').addEventListener('click', function(e) {
-                if (e.target === this) {
-                    closeModal();
-                }
-            });
-
-            document.getElementById('donationForm').addEventListener('submit', async function(e) {
-                e.preventDefault();
-                
-                if (!await connectWallet()) {
-                    return;
-                }
-
-                const ethAmount = document.getElementById('eth-amount').value;
-                const lockPeriod = document.getElementById('lock-period').value;
-
-                try {
-                    const weiAmount = ethers.utils.parseEther(ethAmount.toString());
-                    
-                    const tx = await contract.deposit(lockPeriod, {
-                        value: weiAmount
-                    });
-
-                    showStatus('Processing transaction...');
-                    
-                    await tx.wait();
-                    
-                    showStatus('Donation successful!');
-                    
-                    setTimeout(closeModal, 2000);
-                } catch (error) {
-                    showStatus(error.message, true);
-                }
-            });
-
-            // Make functions globally accessible
-            window.connectWallet = connectWallet;
-            window.withdrawFunds = withdrawFunds;
-            window.openModal = openModal;
-            window.closeModal = closeModal;
-            window.showStatus = showStatus;
         });
-    </script>
+
+        document.getElementById('donationForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            if (!await connectWallet()) {
+                return;
+            }
+
+            const ethAmount = document.getElementById('eth-amount').value;
+            const lockPeriod = document.getElementById('lock-period').value;
+
+            try {
+                const weiAmount = ethers.utils.parseEther(ethAmount.toString());
+                
+                const tx = await contract.deposit(lockPeriod, {
+                    value: weiAmount
+                });
+
+                showStatus('Processing transaction...');
+                
+                await tx.wait();
+                
+                showStatus('Donation successful!');
+                
+                setTimeout(closeModal, 2000);
+            } catch (error) {
+                showStatus(error.message, true);
+            }
+        });
+    });
+</script>
 </body>
 </html>

@@ -239,84 +239,109 @@
         <a href="/yieldforgoodwebsite/charity.html" class="donate-btn">DONATE NOW</a>
     </section>
 
-    <script src="https://cdn.ethers.io/lib/ethers-5.7.2.umd.min.js" type="application/javascript"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
     <script>
-        const CONTRACT_ADDRESS = '0xd9582a10448fA9eC8f816782664e97051B0Fd931';
-        const CONTRACT_ABI = [
-            {
-                "inputs": [],
-                "name": "fetchYieldAmount",
-                "outputs": [{"type": "uint256"}],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "totalAmount",
-                "outputs": [{"type": "uint256"}],
-                "stateMutability": "view",
-                "type": "function"
-            }
-        ];
+        // Wait for the ethers library to load
+        window.addEventListener('DOMContentLoaded', async () => {
+            const CONTRACT_ADDRESS = '0xd9582a10448fA9eC8f816782664e97051B0Fd931';
+            const CONTRACT_ABI = [
+                {
+                    "inputs": [],
+                    "name": "fetchYieldAmount",
+                    "outputs": [{"type": "uint256"}],
+                    "stateMutability": "view",
+                    "type": "function"
+                },
+                {
+                    "inputs": [],
+                    "name": "totalAmount",
+                    "outputs": [{"type": "uint256"}],
+                    "stateMutability": "view",
+                    "type": "function"
+                }
+            ];
 
-        async function connectContract() {
-            try {
-                // Connect to provider (assuming Ethereum mainnet)
-                const provider = new ethers.providers.Web3Provider(window.ethereum);
-                
-                // Create contract instance
-                const contract = new ethers.Contract(
-                    CONTRACT_ADDRESS,
-                    CONTRACT_ABI,
-                    provider
-                );
+            async function connectContract() {
+                try {
+                    // Check if ethers is available
+                    if (typeof ethers === 'undefined') {
+                        throw new Error('Ethers library not loaded');
+                    }
 
-                return contract;
-            } catch (error) {
-                console.error('Error connecting to contract:', error);
-                return null;
-            }
-        }
+                    // Check if MetaMask is installed
+                    if (typeof window.ethereum === 'undefined') {
+                        throw new Error('MetaMask not installed');
+                    }
 
-        function formatAmount(amount) {
-            // Convert from wei to ether and format with 2 decimal places
-            return parseFloat(ethers.utils.formatEther(amount)).toFixed(2);
-        }
+                    // Connect to provider (assuming Ethereum mainnet)
+                    const provider = new ethers.providers.Web3Provider(window.ethereum);
+                    
+                    // Create contract instance
+                    const contract = new ethers.Contract(
+                        CONTRACT_ADDRESS,
+                        CONTRACT_ABI,
+                        provider
+                    );
 
-        async function updateStats() {
-            const contract = await connectContract();
-            if (!contract) {
-                document.getElementById('yieldError').textContent = 'Unable to connect to blockchain';
-                document.getElementById('totalError').textContent = 'Unable to connect to blockchain';
-                return;
-            }
-
-            try {
-                // Fetch yield amount
-                const yieldAmount = await contract.fetchYieldAmount();
-                document.getElementById('yieldAmount').textContent = 
-                    '$' + formatAmount(yieldAmount);
-            } catch (error) {
-                document.getElementById('yieldError').textContent = 
-                    'Error fetching yield amount';
+                    return contract;
+                } catch (error) {
+                    console.error('Error connecting to contract:', error);
+                    return null;
+                }
             }
 
-            try {
-                // Fetch total amount
-                const totalAmount = await contract.totalAmount();
-                document.getElementById('totalAmount').textContent = 
-                    '$' + formatAmount(totalAmount);
-            } catch (error) {
-                document.getElementById('totalError').textContent = 
-                    'Error fetching total amount';
+            function formatAmount(amount) {
+                try {
+                    return parseFloat(ethers.utils.formatEther(amount)).toFixed(2);
+                } catch (error) {
+                    console.error('Error formatting amount:', error);
+                    return '0.00';
+                }
             }
-        }
 
-        // Update stats when page loads
-        window.addEventListener('load', updateStats);
+            async function updateStats() {
+                const contract = await connectContract();
+                if (!contract) {
+                    document.getElementById('yieldAmount').textContent = '$0.00';
+                    document.getElementById('totalAmount').textContent = '$0.00';
+                    document.getElementById('yieldError').textContent = 'Unable to connect to blockchain';
+                    document.getElementById('totalError').textContent = 'Unable to connect to blockchain';
+                    return;
+                }
 
-        // Update stats every 30 seconds
-        setInterval(updateStats, 30000);
+                try {
+                    // Fetch yield amount
+                    const yieldAmount = await contract.fetchYieldAmount();
+                    document.getElementById('yieldAmount').textContent = 
+                        '$' + formatAmount(yieldAmount);
+                    document.getElementById('yieldError').textContent = '';
+                } catch (error) {
+                    console.error('Error fetching yield amount:', error);
+                    document.getElementById('yieldAmount').textContent = '$0.00';
+                    document.getElementById('yieldError').textContent = 
+                        'Error fetching yield amount';
+                }
+
+                try {
+                    // Fetch total amount
+                    const totalAmount = await contract.totalAmount();
+                    document.getElementById('totalAmount').textContent = 
+                        '$' + formatAmount(totalAmount);
+                    document.getElementById('totalError').textContent = '';
+                } catch (error) {
+                    console.error('Error fetching total amount:', error);
+                    document.getElementById('totalAmount').textContent = '$0.00';
+                    document.getElementById('totalError').textContent = 
+                        'Error fetching total amount';
+                }
+            }
+
+            // Initial update
+            await updateStats();
+
+            // Update stats every 30 seconds
+            setInterval(updateStats, 30000);
+        });
     </script>
 </body>
 </html>

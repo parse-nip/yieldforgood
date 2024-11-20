@@ -312,7 +312,7 @@
                     const yieldAmount = await contract.fetchYieldAmount();
                     console.log('Raw yield amount:', yieldAmount.toString());
                     document.getElementById('yieldAmount').textContent = 
-                        '$' + formatAmount(yieldAmount);
+                        formatAmount(yieldAmount) + 'ETH';
                     document.getElementById('yieldError').textContent = '';
                 } catch (error) {
                     console.error('Error fetching yield amount:', error);

@@ -148,59 +148,120 @@
         .flowchart img {
             width: 100%;
         }
+
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            .header {
+                padding: 20px;
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .hero h1 {
+                font-size: 36px;
+            }
+
+            .stats {
+                flex-direction: column;
+                gap: 40px;
+            }
+
+            .stat-item {
+                padding: 0 20px;
+            }
+        }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/web3@1.5.2/dist/web3.min.js"></script>
+    <!-- Web3 and Ethereum dependencies -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.8.2/web3.min.js"></script>
+    <script src="https://cdn.ethers.io/lib/ethers-5.7.2.umd.min.js" type="application/javascript"></script>
     <script>
-        async function updateStats() {
-            // Connect to Web3
-            if (typeof window.ethereum !== 'undefined') {
+        let web3;
+        let contract;
+        const contractAddress = "0xd9582a10448fA9eC8f816782664e97051B0Fd931";
+        const contractABI = [
+            {
+                "inputs": [],
+                "name": "totalAmount",
+                "outputs": [{"internalType": "uint256","name": "","type": "uint256"}],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "fetchYieldAmount",
+                "outputs": [{"internalType": "uint256","name": "","type": "uint256"}],
+                "stateMutability": "view",
+                "type": "function"
+            }
+        ];
+
+        async function initWeb3() {
+            if (window.ethereum) {
                 try {
                     // Request account access
                     await window.ethereum.request({ method: 'eth_requestAccounts' });
-                    
-                    // Initialize Web3 with the provider
-                    const web3 = new Web3(window.ethereum);
-                    
-                    // Contract ABI and address would go here
-                    const contractABI = ["function fetchYieldAmount external view returns (uint256)"]; // contract ABI
-                    const contractAddress = "0xd9582a10448fA9eC8f816782664e97051B0Fd931";
-                    const contract = new web3.eth.Contract(contractABI, contractAddress);
-
-                    try {
-                        // Get total amount deposited
-                        const totalAmount = await contract.methods.totalAmount().call();
-                        document.getElementById('totalDeposited').innerText = 
-                            '$' + (totalAmount / 1e18).toLocaleString();
-
-                        // Get yield generated
-                        const yieldAmount = await contract.methods.fetchYieldAmount().call();
-                        document.getElementById('yieldGenerated').innerText = 
-                            '$' + (yieldAmount / 1e18).toLocaleString();
-                    } catch (contractError) {
-                        console.error("Contract error:", contractError);
-                        // Set fallback values if contract calls fail
-                        document.getElementById('totalDeposited').innerText = '$0';
-                        document.getElementById('yieldGenerated').innerText = '$0';
-                    }
-
+                    web3 = new Web3(window.ethereum);
+                    contract = new web3.eth.Contract(contractABI, contractAddress);
+                    return true;
                 } catch (error) {
-                    console.error("Error connecting to wallet:", error);
-                    // Set fallback values if connection fails
-                    document.getElementById('totalDeposited').innerText = '$0';
-                    document.getElementById('yieldGenerated').innerText = '$0';
+                    console.error("User denied account access:", error);
+                    return false;
                 }
+            } else if (window.web3) {
+                web3 = new Web3(window.web3.currentProvider);
+                contract = new web3.eth.Contract(contractABI, contractAddress);
+                return true;
             } else {
-                console.log("No Ethereum wallet detected");
-                // Set fallback values if no wallet is detected
-                document.getElementById('totalDeposited').innerText = '$0';
-                document.getElementById('yieldGenerated').innerText = '$0';
+                console.log('Non-Ethereum browser detected. Consider installing MetaMask!');
+                return false;
             }
         }
 
-        // Update stats when page loads
-        window.addEventListener('load', updateStats);
-        // Update stats every 30 seconds
-        setInterval(updateStats, 30000);
+        async function updateStats() {
+            try {
+                if (!web3) {
+                    const initialized = await initWeb3();
+                    if (!initialized) {
+                        setDefaultValues();
+                        return;
+                    }
+                }
+
+                // Get total amount deposited
+                const totalAmount = await contract.methods.totalAmount().call();
+                document.getElementById('totalDeposited').innerText = 
+                    '$' + (totalAmount / 1e18).toLocaleString();
+
+                // Get yield generated
+                const yieldAmount = await contract.methods.fetchYieldAmount().call();
+                document.getElementById('yieldGenerated').innerText = 
+                    '$' + (yieldAmount / 1e18).toLocaleString();
+
+            } catch (error) {
+                console.error("Error updating stats:", error);
+                setDefaultValues();
+            }
+        }
+
+        function setDefaultValues() {
+            document.getElementById('totalDeposited').innerText = '$0';
+            document.getElementById('yieldGenerated').innerText = '$0';
+        }
+
+        // Initialize when page loads
+        window.addEventListener('load', async () => {
+            await updateStats();
+            // Update stats every 30 seconds
+            setInterval(updateStats, 30000);
+        });
+
+        // Listen for account changes
+        if (window.ethereum) {
+            window.ethereum.on('accountsChanged', updateStats);
+            window.ethereum.on('chainChanged', () => {
+                window.location.reload();
+            });
+        }
     </script>
 </head>
 <body>

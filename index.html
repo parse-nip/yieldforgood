@@ -300,8 +300,8 @@
                 console.log('Starting updateStats...');
                 const contract = await connectContract();
                 if (!contract) {
-                    document.getElementById('yieldAmount').textContent = '$0.0000';
-                    document.getElementById('totalAmount').textContent = '$0.0000';
+                    document.getElementById('yieldAmount').textContent = '0.0000 ETH';
+                    document.getElementById('totalAmount').textContent = '0.0000 ETH';
                     document.getElementById('yieldError').textContent = 'Unable to connect to blockchain';
                     document.getElementById('totalError').textContent = 'Unable to connect to blockchain';
                     return;
@@ -316,7 +316,7 @@
                     document.getElementById('yieldError').textContent = '';
                 } catch (error) {
                     console.error('Error fetching yield amount:', error);
-                    document.getElementById('yieldAmount').textContent = '$0.0000';
+                    document.getElementById('yieldAmount').textContent = '0.0000 ETH';
                     document.getElementById('yieldError').textContent = 
                         'Error fetching yield amount';
                 }
@@ -330,7 +330,7 @@
                     document.getElementById('totalError').textContent = '';
                 } catch (error) {
                     console.error('Error fetching total amount:', error);
-                    document.getElementById('totalAmount').textContent = '$0.0000';
+                    document.getElementById('totalAmount').textContent = '0.0000 ETH';
                     document.getElementById('totalError').textContent = 
                         'Error fetching total amount';
                 }

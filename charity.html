@@ -7,6 +7,7 @@
     <!-- Load ethers from UNPKG CDN -->
     <script src="https://unpkg.com/ethers@5.7.2/dist/ethers.umd.min.js"></script>
     <style>
+        /* Previous CSS remains exactly the same */
         * {
             margin: 0;
             padding: 0;
@@ -172,15 +173,10 @@
             background-color: #e6ffe6;
             color: #008000;
         }
-
-        .balance-info {
-            margin-top: 10px;
-            color: #666;
-            font-size: 14px;
-        }
     </style>
 </head>
 <body>
+    <!-- Previous HTML remains exactly the same -->
     <header class="header">
         <a href="index.html" class="logo">
             <img src="logo.png" alt="Yield For Good">
@@ -189,7 +185,6 @@
             <a href="#about">About</a>
             <a href="#" class="donate-btn" onclick="openModal('Yield For Good')">DONATE NOW</a>
             <button onclick="withdrawFunds()" class="withdraw-btn">WITHDRAW</button>
-            <div id="balance-info" class="balance-info"></div>
         </nav>
     </header>
 
@@ -223,83 +218,24 @@
     </div>
 
     <script>
+        // Verify ethers is loaded
         window.addEventListener('load', function() {
             if (typeof window.ethers === 'undefined') {
                 console.error('Ethers library not loaded');
             } else {
                 console.log('Ethers library loaded successfully');
-                // Check balance immediately when page loads
-                updateBalanceInfo();
             }
         });
 
         let contract;
         let signer;
 
-<script>
-    // Updated ABI to match the full contract
-    const contractABI = [
-        {
-            "inputs": [
-                {"name": "lockTime", "type": "uint256"}
-            ],
-            "name": "deposit",
-            "outputs": [],
-            "stateMutability": "payable",
-            "type": "function"
-        },
-        {
-            "inputs": [],
-            "name": "withdraw",
-            "outputs": [],
-            "stateMutability": "nonpayable",
-            "type": "function"
-        },
-        {
-            "inputs": [{"name": "", "type": "address"}],
-            "name": "depositedAmount",
-            "outputs": [{"name": "", "type": "uint256"}],
-            "stateMutability": "view",
-            "type": "function"
-        },
-        {
-            "inputs": [{"name": "", "type": "address"}],
-            "name": "userLockTime",
-            "outputs": [{"name": "", "type": "uint256"}],
-            "stateMutability": "view",
-            "type": "function"
-        }
-    ];
+        const contractABI = [
+            "function deposit(uint256 lockTime) payable external nonReentrant",
+            "function withdraw() external nonReentrant"
+        ];
+        const contractAddress = "0xd9582a10448fA9eC8f816782664e97051B0Fd931";
 
-    async function checkBalance() {
-        try {
-            if (!await connectWallet()) return;
-            
-            const userAddress = await signer.getAddress();
-            const amount = await contract.depositedAmount(userAddress);
-            const lockTimeStamp = await contract.userLockTime(userAddress);
-            
-            const amountInEth = ethers.utils.formatEther(amount);
-            const currentTime = Math.floor(Date.now() / 1000);
-            
-            if (amount.eq(0)) {
-                return "No funds available to withdraw";
-            }
-            
-            if (parseInt(lockTimeStamp.toString()) > currentTime) {
-                const remainingTime = parseInt(lockTimeStamp.toString()) - currentTime;
-                return `${amountInEth} ETH locked for ${remainingTime} more seconds`;
-            }
-            
-            return `${amountInEth} ETH available to withdraw`;
-        } catch (error) {
-            console.error("Error checking balance:", error);
-            return "Error checking balance";
-        }
-    }
-
-
-        
         async function connectWallet() {
             try {
                 if (typeof window.ethereum === 'undefined') {
@@ -319,31 +255,16 @@
                 return false;
             }
         }
-        async function updateBalanceInfo() {
-            const balanceInfo = document.getElementById('balance-info');
-            const balance = await checkBalance();
-            balanceInfo.textContent = balance;
-        }
 
         async function withdrawFunds() {
             try {
                 if (!await connectWallet()) return;
 
-                const balanceStatus = await checkBalance();
-                if (balanceStatus.includes("locked") || balanceStatus.includes("No funds")) {
-                    showStatus(balanceStatus, true);
-                    return;
-                }
-
-                showStatus('Initiating withdrawal...');
                 const tx = await contract.withdraw();
                 showStatus('Processing withdrawal...');
                 
                 await tx.wait();
-                showStatus('Withdrawal successful! Amount: ' + balanceStatus);
-                
-                // Update balance info after successful withdrawal
-                setTimeout(updateBalanceInfo, 2000);
+                showStatus('Withdrawal successful!');
             } catch (error) {
                 showStatus(error.message, true);
             }
@@ -396,21 +317,11 @@
                 
                 showStatus('Donation successful!');
                 
-                // Update balance info after successful donation
-                setTimeout(() => {
-                    updateBalanceInfo();
-                    closeModal();
-                }, 2000);
+                setTimeout(closeModal, 2000);
             } catch (error) {
                 showStatus(error.message, true);
             }
         });
-
-        // Listen for network changes and update balance
-        if (window.ethereum) {
-            window.ethereum.on('accountsChanged', updateBalanceInfo);
-            window.ethereum.on('chainChanged', updateBalanceInfo);
-        }
     </script>
 </body>
 </html>

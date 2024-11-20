@@ -4,9 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Donate - Yield For Good</title>
-    <!-- Changed to ethers v5.7.2 CDN that exports global ethers object -->
-    <script src="https://cdn.ethers.io/lib/ethers-5.7.2.umd.min.js" type="application/javascript"></script>
+    <!-- Load ethers from UNPKG CDN -->
+    <script src="https://unpkg.com/ethers@5.7.2/dist/ethers.umd.min.js"></script>
     <style>
+        /* Previous CSS remains exactly the same */
         * {
             margin: 0;
             padding: 0;
@@ -175,6 +176,7 @@
     </style>
 </head>
 <body>
+    <!-- Previous HTML remains exactly the same -->
     <header class="header">
         <a href="index.html" class="logo">
             <img src="logo.png" alt="Yield For Good">
@@ -216,6 +218,15 @@
     </div>
 
     <script>
+        // Verify ethers is loaded
+        window.addEventListener('load', function() {
+            if (typeof window.ethers === 'undefined') {
+                console.error('Ethers library not loaded');
+            } else {
+                console.log('Ethers library loaded successfully');
+            }
+        });
+
         let contract;
         let signer;
 

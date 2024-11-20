@@ -265,8 +265,8 @@
                         throw new Error('Ethers library not loaded');
                     }
 
-                    // Blast network configuration
                     const blastRPC = "https://rpc.blast.io";
+                    console.log('Connecting to Blast mainnet...');
                     const provider = new ethers.providers.JsonRpcProvider(blastRPC);
                     
                     // Create contract instance
@@ -276,6 +276,7 @@
                         provider
                     );
 
+                    console.log('Contract connection established');
                     return contract;
                 } catch (error) {
                     console.error('Error connecting to contract:', error);
@@ -285,45 +286,51 @@
 
             function formatAmount(amount) {
                 try {
-                    return parseFloat(ethers.utils.formatEther(amount)).toFixed(2);
+                    const formattedAmount = ethers.utils.formatEther(amount);
+                    console.log('Raw amount:', amount.toString());
+                    console.log('Formatted amount:', formattedAmount);
+                    return parseFloat(formattedAmount).toFixed(4); // Showing 4 decimal places
                 } catch (error) {
                     console.error('Error formatting amount:', error);
-                    return '0.00';
+                    return '0.0000';
                 }
             }
 
             async function updateStats() {
+                console.log('Starting updateStats...');
                 const contract = await connectContract();
                 if (!contract) {
-                    document.getElementById('yieldAmount').textContent = '$0.00';
-                    document.getElementById('totalAmount').textContent = '$0.00';
+                    document.getElementById('yieldAmount').textContent = '$0.0000';
+                    document.getElementById('totalAmount').textContent = '$0.0000';
                     document.getElementById('yieldError').textContent = 'Unable to connect to blockchain';
                     document.getElementById('totalError').textContent = 'Unable to connect to blockchain';
                     return;
                 }
 
                 try {
-                    // Fetch yield amount
+                    console.log('Fetching yield amount...');
                     const yieldAmount = await contract.fetchYieldAmount();
+                    console.log('Raw yield amount:', yieldAmount.toString());
                     document.getElementById('yieldAmount').textContent = 
                         '$' + formatAmount(yieldAmount);
                     document.getElementById('yieldError').textContent = '';
                 } catch (error) {
                     console.error('Error fetching yield amount:', error);
-                    document.getElementById('yieldAmount').textContent = '$0.00';
+                    document.getElementById('yieldAmount').textContent = '$0.0000';
                     document.getElementById('yieldError').textContent = 
                         'Error fetching yield amount';
                 }
 
                 try {
-                    // Fetch total amount
+                    console.log('Fetching total amount...');
                     const totalAmount = await contract.totalAmount();
+                    console.log('Raw total amount:', totalAmount.toString());
                     document.getElementById('totalAmount').textContent = 
                         '$' + formatAmount(totalAmount);
                     document.getElementById('totalError').textContent = '';
                 } catch (error) {
                     console.error('Error fetching total amount:', error);
-                    document.getElementById('totalAmount').textContent = '$0.00';
+                    document.getElementById('totalAmount').textContent = '$0.0000';
                     document.getElementById('totalError').textContent = 
                         'Error fetching total amount';
                 }

@@ -236,13 +236,70 @@
         let contract;
         let signer;
 
-        const contractABI = [
-            "function deposit(uint256 lockTime) payable external nonReentrant",
-            "function withdraw() external nonReentrant",
-            "function lockedBalances(address) external view returns (uint256 amount, uint256 lockTime)"
-        ];
-        const contractAddress = "0xd9582a10448fA9eC8f816782664e97051B0Fd931";
+<script>
+    // Updated ABI to match the full contract
+    const contractABI = [
+        {
+            "inputs": [
+                {"name": "lockTime", "type": "uint256"}
+            ],
+            "name": "deposit",
+            "outputs": [],
+            "stateMutability": "payable",
+            "type": "function"
+        },
+        {
+            "inputs": [],
+            "name": "withdraw",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
+            "inputs": [{"name": "", "type": "address"}],
+            "name": "depositedAmount",
+            "outputs": [{"name": "", "type": "uint256"}],
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "inputs": [{"name": "", "type": "address"}],
+            "name": "userLockTime",
+            "outputs": [{"name": "", "type": "uint256"}],
+            "stateMutability": "view",
+            "type": "function"
+        }
+    ];
 
+    async function checkBalance() {
+        try {
+            if (!await connectWallet()) return;
+            
+            const userAddress = await signer.getAddress();
+            const amount = await contract.depositedAmount(userAddress);
+            const lockTimeStamp = await contract.userLockTime(userAddress);
+            
+            const amountInEth = ethers.utils.formatEther(amount);
+            const currentTime = Math.floor(Date.now() / 1000);
+            
+            if (amount.eq(0)) {
+                return "No funds available to withdraw";
+            }
+            
+            if (parseInt(lockTimeStamp.toString()) > currentTime) {
+                const remainingTime = parseInt(lockTimeStamp.toString()) - currentTime;
+                return `${amountInEth} ETH locked for ${remainingTime} more seconds`;
+            }
+            
+            return `${amountInEth} ETH available to withdraw`;
+        } catch (error) {
+            console.error("Error checking balance:", error);
+            return "Error checking balance";
+        }
+    }
+
+
+        
         async function connectWallet() {
             try {
                 if (typeof window.ethereum === 'undefined') {
@@ -262,34 +319,6 @@
                 return false;
             }
         }
-
-        async function checkBalance() {
-            try {
-                if (!await connectWallet()) return;
-                
-                const userAddress = await signer.getAddress();
-                const balance = await contract.lockedBalances(userAddress);
-                
-                const amountInEth = ethers.utils.formatEther(balance.amount);
-                const lockTime = balance.lockTime.toString();
-                const currentTime = Math.floor(Date.now() / 1000);
-                
-                if (balance.amount.eq(0)) {
-                    return "No funds available to withdraw";
-                }
-                
-                if (parseInt(lockTime) > currentTime) {
-                    const remainingTime = parseInt(lockTime) - currentTime;
-                    return `${amountInEth} ETH locked for ${remainingTime} more seconds`;
-                }
-                
-                return `${amountInEth} ETH available to withdraw`;
-            } catch (error) {
-                console.error("Error checking balance:", error);
-                return "Error checking balance";
-            }
-        }
-
         async function updateBalanceInfo() {
             const balanceInfo = document.getElementById('balance-info');
             const balance = await checkBalance();

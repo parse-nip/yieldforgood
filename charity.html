@@ -4,8 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Donate - Yield For Good</title>
+    <!-- Load ethers from UNPKG CDN -->
     <script src="https://unpkg.com/ethers@5.7.2/dist/ethers.umd.min.js"></script>
     <style>
+        /* Previous CSS remains exactly the same */
         * {
             margin: 0;
             padding: 0;
@@ -14,19 +16,25 @@
         }
 
         body {
-            background-color: white;
+            background-color: #f8f9fa;
+            padding: 20px;
         }
 
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 20px 40px;
-            background-color: white;
+            padding: 20px 0;
+            max-width: 1200px; 
+            margin: 0 auto;
+        }
+
+        .logo {
+            cursor: pointer;
         }
 
         .logo img {
-            height: 40px;
+            height: 60px;
         }
 
         .nav {
@@ -35,62 +43,51 @@
             align-items: center;
         }
 
-        .nav a {
+        .donate-btn, .withdraw-btn {
+            background-color: #1a1a1a;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
             text-decoration: none;
-            color: #333;
-        }
-
-        .donate-btn {
-            background-color: #333;
-            color: white !important;
-            padding: 8px 16px;
-            border-radius: 4px;
-            font-weight: bold;
+            cursor: pointer;
         }
 
         .withdraw-btn {
-            background-color: #666;
-            color: white;
-            padding: 8px 16px;
-            border-radius: 4px;
-            border: none;
-            cursor: pointer;
-            font-weight: bold;
+            background-color: #4a4a4a;
         }
 
         .charities-grid {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 40px;
-            min-height: calc(100vh - 80px);
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 20px;
         }
 
         .charity-card {
             background: white;
-            padding: 40px;
+            padding: 30px;
             border-radius: 8px;
             text-align: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             cursor: pointer;
-            width: 300px;
+            transition: all 0.3s ease;
+            border: 1px solid #eee;
+        }
+
+        .charity-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
 
         .charity-card img {
-            width: 200px;
+            width: 120px;
+            height: 120px;
+            object-fit: contain;
             margin-bottom: 20px;
         }
 
-        .charity-card h3 {
-            margin-bottom: 10px;
-            color: #333;
-        }
-
-        .charity-card p {
-            color: #666;
-        }
-
-        /* Modal styling */
         .modal {
             display: none;
             position: fixed;
@@ -98,7 +95,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
+            background-color: rgba(0,0,0,0.5);
             z-index: 1000;
             justify-content: center;
             align-items: center;
@@ -133,61 +130,93 @@
         .input-group label {
             display: block;
             margin-bottom: 8px;
-            color: #333;
+            color: #666;
         }
 
         .input-group input {
             width: 100%;
-            padding: 8px;
+            padding: 12px;
             border: 1px solid #ddd;
-            border-radius: 4px;
+            border-radius: 5px;
+            font-size: 16px;
         }
 
         .submit-btn {
-            background-color: #333;
+            background-color: #666;
             color: white;
-            padding: 12px 24px;
+            padding: 15px 30px;
             border: none;
-            border-radius: 4px;
+            border-radius: 5px;
             cursor: pointer;
             width: 100%;
-            font-weight: bold;
-        }
-
-        /* Error Modal styling */
-        .modal-error {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .modal-error.active {
-            display: flex;
-        }
-
-        .modal-error-content {
-            background: white;
-            padding: 40px;
-            border-radius: 8px;
-            width: 90%;
-            max-width: 500px;
-            text-align: center;
-            position: relative;
-        }
-
-        .error-message {
-            color: red;
             font-size: 16px;
-            margin: 20px 0;
-            font-weight: bold;
+            margin-top: 20px;
         }
+
+        .submit-btn:hover {
+            background-color: #555;
+        }
+
+        #status-message {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 5px;
+            display: none;
+        }
+
+        .error {
+            background-color: #ffe6e6;
+            color: #ff0000;
+        }
+
+        .success {
+            background-color: #e6ffe6;
+            color: #008000;
+        }
+    </style>
+</head>
+<body>
+    <!-- Previous HTML remains exactly the same -->
+    <header class="header">
+        <a href="index.html" class="logo">
+            <img src="logo.png" alt="Yield For Good">
+        </a>
+        <nav class="nav">
+            <a href="#about">About</a>
+            <a href="#" class="donate-btn" onclick="openModal('Yield For Good')">DONATE NOW</a>
+            <button onclick="withdrawFunds()" class="withdraw-btn">WITHDRAW</button>
+        </nav>
+    </header>
+
+    <div class="charities-grid">
+        <div class="charity-card" onclick="openModal('Yield For Good')">
+            <img src="logo.png" alt="Yield For Good">
+            <h3>Yield For Good</h3>
+            <p>Empowering Change Through Yield</p>
+        </div>
+    </div>
+
+    <div class="modal" id="donationModal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal()">&times;</span>
+            <h2 id="modalTitle">Donate to Charity</h2>
+            <form id="donationForm">
+                <div class="input-group">
+                    <label for="eth-amount">Donation Amount (ETH)</label>
+                    <input type="number" id="eth-amount" step="0.0001" min="0.0001" placeholder="0.0001" required>
+                </div>
+
+                <div class="input-group">
+                    <label for="lock-period">Lock Period (Seconds)</label>
+                    <input type="number" id="lock-period" placeholder="604800" required>
+                </div>
+
+                <button type="submit" class="submit-btn">Confirm Donation</button>
+            </form>
+            <div id="status-message"></div>
+        </div>
+    </div>
+
 
     <script>
         // Previous initial code remains the same
@@ -305,6 +334,5 @@
         });
     </script>
 
-            
 </body>
 </html>

@@ -230,32 +230,31 @@
         }
     }
 
-    async function updateStats() {
-        try {
-            if (!web3) {
-                const initialized = await initWeb3();
-                if (!initialized) {
-                    setDefaultValues();
-                    return;
-                }
-            }
-
-            const totalAmount = await contract.methods.totalAmount().call();
-            console.log("Total Amount:", totalAmount);
-            document.getElementById('totalDeposited').innerText = 
-                web3.utils.fromWei(totalAmount, 'ether') + ' ETH';
-
-            const yieldAmount = await contract.methods.fetchYieldAmount().call();
-            console.log("Yield Amount:", yieldAmount);
-            document.getElementById('yieldGenerated').innerText = 
-                web3.utils.fromWei(yieldAmount, 'ether') + ' ETH';
-
-        } catch (error) {
-            console.error("Error updating stats:", error);
-            setDefaultValues();
-        }
+async function updateStats() {
+  try {
+    if (!web3) {
+      const initialized = await initWeb3();
+      if (!initialized) {
+        setDefaultValues();
+        return;
+      }
     }
 
+    const totalAmount = await contract.methods.totalAmount().call();
+    console.log("Total Amount:", totalAmount);
+    document.getElementById('totalDeposited').innerText = web3.utils.fromWei(totalAmount, 'ether') + ' ETH';
+
+    const yieldAmount = await contract.methods.fetchYieldAmount().call();
+    console.log("Yield Amount:", yieldAmount);
+    document.getElementById('yieldGenerated').innerText = web3.utils.fromWei(yieldAmount, 'ether') + ' ETH';
+  } catch (error) {
+    console.error("Error updating stats:", error);
+    setDefaultValues();
+  }
+}
+
+
+    
     function setDefaultValues() {
         document.getElementById('totalDeposited').innerText = '0 ETH';
         document.getElementById('yieldGenerated').innerText = '0 ETH';

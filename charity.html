@@ -9,6 +9,7 @@
         crossorigin="anonymous" 
         referrerpolicy="no-referrer"></script>
     <style>
+        /* Your existing CSS styles */
         * {
             margin: 0;
             padding: 0;
@@ -30,10 +31,6 @@
             margin: 0 auto;
         }
 
-        .logo {
-            cursor: pointer;
-        }
-
         .logo img {
             height: 60px;
         }
@@ -41,7 +38,6 @@
         .nav {
             display: flex;
             gap: 20px;
-            align-items: center;
         }
 
         .donate-btn, .withdraw-btn {
@@ -62,7 +58,6 @@
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
             gap: 20px;
-            max-width: 1200px;
             margin: 40px auto;
             padding: 20px;
         }
@@ -82,13 +77,6 @@
             box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
 
-        .charity-card img {
-            width: 120px;
-            height: 120px;
-            object-fit: contain;
-            margin-bottom: 20px;
-        }
-
         .modal {
             display: none;
             position: fixed;
@@ -97,7 +85,6 @@
             width: 100%;
             height: 100%;
             background-color: rgba(0,0,0,0.5);
-            z-index: 1000;
             justify-content: center;
             align-items: center;
         }
@@ -112,7 +99,6 @@
             border-radius: 8px;
             width: 90%;
             max-width: 500px;
-            position: relative;
         }
 
         .close-modal {
@@ -121,48 +107,13 @@
             top: 20px;
             font-size: 24px;
             cursor: pointer;
-            color: #666;
-        }
-
-        .input-group {
-            margin: 20px 0;
-        }
-
-        .input-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: #666;
-        }
-
-        .input-group input {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 16px;
-        }
-
-        .submit-btn {
-            background-color: #666;
-            color: white;
-            padding: 15px 30px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            width: 100%;
-            font-size: 16px;
-            margin-top: 20px;
-        }
-
-        .submit-btn:hover {
-            background-color: #555;
         }
 
         #status-message {
             margin-top: 20px;
             padding: 10px;
-            border-radius: 5px;
             display: none;
+            border-radius: 5px;
         }
 
         .error {
@@ -183,7 +134,7 @@
         </a>
         <nav class="nav">
             <a href="#about">About</a>
-            <a href="#" class="donate-btn">DONATE NOW</a>
+            <a href="#" class="donate-btn" onclick="openModal('Yield For Good')">DONATE NOW</a>
             <button onclick="withdrawFunds()" class="withdraw-btn">WITHDRAW</button>
         </nav>
     </header>
@@ -205,123 +156,99 @@
                     <label for="eth-amount">Donation Amount (ETH)</label>
                     <input type="number" id="eth-amount" step="0.0001" min="0.0001" placeholder="0.0001" required>
                 </div>
-
                 <div class="input-group">
                     <label for="lock-period">Lock Period (Seconds)</label>
                     <input type="number" id="lock-period" placeholder="604800" required>
                 </div>
-
                 <button type="submit" class="submit-btn">Confirm Donation</button>
             </form>
             <div id="status-message"></div>
         </div>
     </div>
-<!-- Keep all the HTML and CSS the same, just replace the script section -->
-<script>
-    const contractABI = [
-        "function deposit(uint256 lockTime) payable external nonReentrant",
-        "function withdraw() external nonReetrant"
-    ];
 
-    const contractAddress = "0xd9582a10448fA9eC8f816782664e97051B0Fd931";
+    <script>
+        const contractABI = [
+            "function deposit(uint256 lockTime) payable external nonReentrant",
+            "function withdraw() external nonReentrant"
+        ];
 
-    let selectedCharity = '';
-    let contract;
-    let signer;
+        const contractAddress = "0xd9582a10448fA9eC8f816782664e97051B0Fd931";
 
-    async function connectWallet() {
-        try {
-            if (typeof window.ethereum === 'undefined') {
-                throw new Error('Please install MetaMask to use this feature');
-            }
+        let contract;
+        let signer;
 
-            await window.ethereum.request({ method: 'eth_requestAccounts' });
-            
-            const provider = new ethers.providers.Web3Provider(window.ethereum);
-            signer = provider.getSigner();
-            
-            contract = new ethers.Contract(contractAddress, contractABI, signer);
-            
-            return true;
-        } catch (error) {
-            showStatus(error.message, true);
-            return false;
-        }
-    }
-
-    async function withdrawFunds() {
-        try {
-            if (!await connectWallet()) {
-                return;
-            }
-
-            const tx = await contract.withdraw();
-            showStatus('Processing withdrawal...');
-            
-            await tx.wait();
-            showStatus('Withdrawal successful!');
-        } catch (error) {
-            showStatus(error.message, true);
-        }
-    }
-
-    function openModal(charityName) {
-        selectedCharity = charityName;
-        const modal = document.getElementById('donationModal');
-        const modalTitle = document.getElementById('modalTitle');
-        modalTitle.textContent = `Donate to ${charityName}`;
-        modal.classList.add('active');
-    }
-
-    function closeModal() {
-        const modal = document.getElementById('donationModal');
-        modal.classList.remove('active');
-        document.getElementById('status-message').style.display = 'none';
-    }
-
-    function showStatus(message, isError = false) {
-        const statusElement = document.getElementById('status-message');
-        statusElement.textContent = message;
-        statusElement.className = isError ? 'error' : 'success';
-        statusElement.style.display = 'block';
-    }
-
-    document.addEventListener('DOMContentLoaded', function() {
-        document.getElementById('donationModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeModal();
-            }
-        });
-
-        document.getElementById('donationForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            if (!await connectWallet()) {
-                return;
-            }
-
-            const ethAmount = document.getElementById('eth-amount').value;
-            const lockPeriod = document.getElementById('lock-period').value;
-
+        async function connectWallet() {
             try {
-                const weiAmount = ethers.utils.parseEther(ethAmount.toString());
-                
-                const tx = await contract.deposit(lockPeriod, {
-                    value: weiAmount
-                });
+                if (!window.ethereum) {
+                    throw new Error("MetaMask is required");
+                }
 
-                showStatus('Processing transaction...');
-                
+                await window.ethereum.request({ method: "eth_requestAccounts" });
+
+                const provider = new ethers.providers.Web3Provider(window.ethereum);
+                signer = provider.getSigner();
+                contract = new ethers.Contract(contractAddress, contractABI, signer);
+
+                return true;
+            } catch (error) {
+                showStatus(error.message, true);
+                return false;
+            }
+        }
+
+        async function withdrawFunds() {
+            try {
+                if (!await connectWallet()) return;
+
+                const tx = await contract.withdraw();
+                showStatus("Processing withdrawal...");
                 await tx.wait();
-                
-                showStatus('Donation successful!');
-                
-                setTimeout(closeModal, 2000);
+                showStatus("Withdrawal successful!");
             } catch (error) {
                 showStatus(error.message, true);
             }
+        }
+
+        function openModal(charityName) {
+            document.getElementById("modalTitle").textContent = `Donate to ${charityName}`;
+            document.getElementById("donationModal").classList.add("active");
+        }
+
+        function closeModal() {
+            document.getElementById("donationModal").classList.remove("active");
+            document.getElementById("status-message").style.display = "none";
+        }
+
+        function showStatus(message, isError = false) {
+            const statusElement = document.getElementById("status-message");
+            statusElement.textContent = message;
+            statusElement.className = isError ? "error" : "success";
+            statusElement.style.display = "block";
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            document.getElementById("donationForm").addEventListener("submit", async (e) => {
+                e.preventDefault();
+
+                if (!await connectWallet()) return;
+
+                const ethAmount = document.getElementById("eth-amount").value;
+                const lockPeriod = document.getElementById("lock-period").value;
+
+                try {
+                    const weiAmount = ethers.utils.parseEther(ethAmount.toString());
+                    const tx = await contract.deposit(lockPeriod, { value: weiAmount });
+
+                    showStatus("Processing donation...");
+                    await tx.wait();
+                    showStatus("Donation successful!");
+
+                    setTimeout(closeModal, 2000);
+                } catch (error) {
+                    showStatus(error.message, true);
+                }
+            });
         });
-    });
-</script>
+    </script>
 </body>
 </html>

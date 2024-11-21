@@ -232,10 +232,20 @@
     </header>
 
     <div class="charities-grid">
-        <div class="charity-card" onclick="openModal('Yield For Good')">
+        <div class="charity-card" onclick="openModal('Yield For Good', 'yfg')">
             <img src="logo.png" alt="Yield For Good">
             <h3>Yield For Good</h3>
             <p>Empowering Change Through Yield</p>
+        </div>
+        <div class="charity-card" onclick="openModal('World Wildlife Fund', 'wwf')">
+            <img src="panda-logo.png" alt="WWF">
+            <h3>World Wildlife Fund</h3>
+            <p>Building a future where people live in harmony with nature</p>
+        </div>
+        <div class="charity-card" onclick="openModal('Save the Children', 'stc')">
+            <img src="stc.svg" alt="Save the Children">
+            <h3>Save the Children</h3>
+            <p>Giving children a healthy start in life</p>
         </div>
     </div>
 
@@ -276,6 +286,7 @@
 
         let contract;
         let signer;
+        let selectedCharity;
 
         const contractABI = [
             "function deposit(uint256 lockTime) payable external nonReentrant",
@@ -283,7 +294,12 @@
             "function userLockTime(address) public view returns (uint256)",
             "function depositedAmount(address) public view returns (uint256)"
         ];
-        const contractAddress = "0xd9582a10448fA9eC8f816782664e97051B0Fd931";
+
+        const contractAddresses = {
+            yfg: "0xd9582a10448fA9eC8f816782664e97051B0Fd931",
+            wwf: "", // Add WWF contract address here
+            stc: ""  // Add Save the Children contract address here
+        };
 
         async function connectWallet() {
             try {
@@ -296,7 +312,9 @@
                 const provider = new ethers.providers.Web3Provider(window.ethereum);
                 signer = provider.getSigner();
                 
-                contract = new ethers.Contract(contractAddress, contractABI, signer);
+                if (selectedCharity) {
+                    contract = new ethers.Contract(contractAddresses[selectedCharity], contractABI, signer);
+                }
                 
                 return true;
             } catch (error) {
@@ -313,7 +331,6 @@
             messageElement.textContent = message;
             notification.style.display = 'block';
 
-            // Auto hide after 5 seconds
             setTimeout(closeNotification, 5000);
         }
 
@@ -353,7 +370,8 @@
             }
         }
 
-        function openModal(charityName) {
+        function openModal(charityName, charityKey) {
+            selectedCharity = charityKey;
             const modal = document.getElementById('donationModal');
             const modalTitle = document.getElementById('modalTitle');
             modalTitle.textContent = `Donate to ${charityName}`;

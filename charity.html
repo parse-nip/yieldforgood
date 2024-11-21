@@ -280,6 +280,29 @@
             font-size: 18px;
             color: #666;
         }
+                .blast-logo {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+    width: 100px;
+    height: auto;
+    opacity: 0.9;
+    transition: opacity 0.3s ease;
+}
+
+.blast-logo:hover {
+    opacity: 1;
+}
+
+@media (max-width: 768px) {
+    .blast-logo {
+        width: 70px;
+        bottom: 15px;
+        right: 15px;
+    }
+}
+
     </style>
 </head>
 <body>
@@ -565,5 +588,9 @@
 
         document.querySelector('.withdraw-btn').onclick = openWithdrawModal;
     </script>
+
+    
+<img src="blast.svg" alt="Blast" class="blast-logo">
+
 </body>
 </html>

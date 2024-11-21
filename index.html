@@ -242,110 +242,127 @@
         <p>It's that simple. No strings attached or fees taken. Yield for Good is and always will be a nonprofit, operating for nothing more than the greater good.</p>
         <a href="/charity.html" class="donate-btn">DONATE NOW</a>
     </section>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
-    <script>
-        window.addEventListener('DOMContentLoaded', async () => {
-            const CONTRACT_ADDRESS = '0xd9582a10448fA9eC8f816782664e97051B0Fd931';
-            const CONTRACT_ABI = [
-                {
-                    "inputs": [],
-                    "name": "fetchYieldAmount",
-                    "outputs": [{"type": "uint256"}],
-                    "stateMutability": "view",
-                    "type": "function"
-                },
-                {
-                    "inputs": [],
-                    "name": "totalAmount",
-                    "outputs": [{"type": "uint256"}],
-                    "stateMutability": "view",
-                    "type": "function"
-                }
-            ];
 
-            async function connectContract() {
-                try {
-                    if (typeof ethers === 'undefined') {
-                        throw new Error('Ethers library not loaded');
-                    }
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+<script>
+    window.addEventListener('DOMContentLoaded', async () => {
+        const CONTRACT_ADDRESSES = [
+            '0xd9582a10448fA9eC8f816782664e97051B0Fd931',
+            // Add more contract addresses here
+            '0x48B126cFb1a01c34998a009434c8024D5b617DF5',
+            '0x48B126cFb1a01c34998a009434c8024D5b617DF5'
+        ];
 
-                    const blastRPC = "https://rpc.blast.io";
-                    console.log('Connecting to Blast mainnet...');
-                    const provider = new ethers.providers.JsonRpcProvider(blastRPC);
-                    
-                    // Create contract instance
-                    const contract = new ethers.Contract(
-                        CONTRACT_ADDRESS,
-                        CONTRACT_ABI,
-                        provider
-                    );
-
-                    console.log('Contract connection established');
-                    return contract;
-                } catch (error) {
-                    console.error('Error connecting to contract:', error);
-                    return null;
-                }
+        const CONTRACT_ABI = [
+            {
+                "inputs": [],
+                "name": "fetchYieldAmount",
+                "outputs": [{"type": "uint256"}],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "totalAmount",
+                "outputs": [{"type": "uint256"}],
+                "stateMutability": "view",
+                "type": "function"
             }
+        ];
 
-            function formatAmount(amount) {
-                try {
-                    const formattedAmount = ethers.utils.formatEther(amount);
-                    console.log('Raw amount:', amount.toString());
-                    console.log('Formatted amount:', formattedAmount);
-                    return parseFloat(formattedAmount).toFixed(4); // Showing 4 decimal places
-                } catch (error) {
-                    console.error('Error formatting amount:', error);
-                    return '0.0000';
+        async function connectContract(address) {
+            try {
+                if (typeof ethers === 'undefined') {
+                    throw new Error('Ethers library not loaded');
                 }
-            }
 
-            async function updateStats() {
-                console.log('Starting updateStats...');
-                const contract = await connectContract();
+                const blastRPC = "https://rpc.blast.io";
+                const provider = new ethers.providers.JsonRpcProvider(blastRPC);
+                
+                const contract = new ethers.Contract(
+                    address,
+                    CONTRACT_ABI,
+                    provider
+                );
+
+                return contract;
+            } catch (error) {
+                console.error('Error connecting to contract:', error);
+                return null;
+            }
+        }
+
+        function formatAmount(amount) {
+            try {
+                const formattedAmount = ethers.utils.formatEther(amount);
+                return parseFloat(formattedAmount).toFixed(4);
+            } catch (error) {
+                console.error('Error formatting amount:', error);
+                return '0.0000';
+            }
+        }
+
+        async function fetchAllContractsData() {
+            const results = {
+                totalYield: ethers.BigNumber.from(0),
+                totalAmount: ethers.BigNumber.from(0),
+                errors: []
+            };
+
+            for (const address of CONTRACT_ADDRESSES) {
+                const contract = await connectContract(address);
                 if (!contract) {
-                    document.getElementById('yieldAmount').textContent = '0.0000 ETH';
-                    document.getElementById('totalAmount').textContent = '0.0000 ETH';
-                    document.getElementById('yieldError').textContent = 'Unable to connect to blockchain';
-                    document.getElementById('totalError').textContent = 'Unable to connect to blockchain';
-                    return;
+                    results.errors.push(`Failed to connect to contract ${address}`);
+                    continue;
                 }
 
                 try {
-                    console.log('Fetching yield amount...');
                     const yieldAmount = await contract.fetchYieldAmount();
-                    console.log('Raw yield amount:', yieldAmount.toString());
-                    document.getElementById('yieldAmount').textContent = 
-                        formatAmount(yieldAmount) + ' ETH';
-                    document.getElementById('yieldError').textContent = '';
+                    results.totalYield = results.totalYield.add(yieldAmount);
                 } catch (error) {
-                    console.error('Error fetching yield amount:', error);
-                    document.getElementById('yieldAmount').textContent = '0.0000 ETH';
-                    document.getElementById('yieldError').textContent = 
-                        'Error fetching yield amount';
+                    results.errors.push(`Error fetching yield from ${address}`);
                 }
 
                 try {
-                    console.log('Fetching total amount...');
-                    const totalAmount = await contract.totalAmount();
-                    console.log('Raw total amount:', totalAmount.toString());
-                    document.getElementById('totalAmount').textContent = 
-                        formatAmount(totalAmount) + ' ETH';
-                    document.getElementById('totalError').textContent = '';
+                    const amount = await contract.totalAmount();
+                    results.totalAmount = results.totalAmount.add(amount);
                 } catch (error) {
-                    console.error('Error fetching total amount:', error);
-                    document.getElementById('totalAmount').textContent = '0.0000 ETH';
-                    document.getElementById('totalError').textContent = 
-                        'Error fetching total amount';
+                    results.errors.push(`Error fetching total amount from ${address}`);
                 }
             }
 
-            // Initial update
-            await updateStats();
+            return results;
+        }
 
-            // Update stats every 30 seconds
-            setInterval(updateStats, 30000);
-        });
-    </script>
+        async function updateStats() {
+            console.log('Starting updateStats...');
+            
+            const yieldElement = document.getElementById('yieldAmount');
+            const totalElement = document.getElementById('totalAmount');
+            const yieldErrorElement = document.getElementById('yieldError');
+            const totalErrorElement = document.getElementById('totalError');
+
+            const results = await fetchAllContractsData();
+
+            if (results.errors.length > 0) {
+                const errorMessage = results.errors.join('; ');
+                yieldErrorElement.textContent = errorMessage;
+                totalErrorElement.textContent = errorMessage;
+            } else {
+                yieldErrorElement.textContent = '';
+                totalErrorElement.textContent = '';
+            }
+
+            yieldElement.textContent = formatAmount(results.totalYield) + ' ETH';
+            totalElement.textContent = formatAmount(results.totalAmount) + ' ETH';
+        }
+
+        // Initial update
+        await updateStats();
+
+        // Update stats every 30 seconds
+        setInterval(updateStats, 30000);
+    });
+</script>
 </body>
 </html>

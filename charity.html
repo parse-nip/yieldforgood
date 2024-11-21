@@ -263,10 +263,10 @@
                 </div>
 
                 <div class="input-group">
-                    <label for="lock-period">Lock Period (Seconds)</label>
-                    <input type="number" id="lock-period" placeholder="604800" required>
+                    <label for="lock-period">Lock Period (Days)</label>
+                    <input type="number" id="lock-period" min="7" placeholder="7" required>
+                    <small style="color: #666; margin-top: 5px; display: block;">Minimum lock period is 7 days. CAUTION: Any existing lock times will be reset based on your newly chosen time.</small>
                 </div>
-
                 <button type="submit" class="submit-btn">Confirm Donation</button>
             </form>
             <div id="status-message"></div>
@@ -397,7 +397,8 @@
             e.preventDefault();
             
             const ethAmount = parseFloat(document.getElementById('eth-amount').value);
-            const lockPeriod = parseInt(document.getElementById('lock-period').value);
+            const lockPeriodDays = parseInt(document.getElementById('lock-period').value);
+            const lockPeriodSeconds = lockPeriodDays * 24 * 60 * 60; // Convert days to seconds
 
             // Validate minimum amount and lock period
             if (ethAmount < 0.0001) {
@@ -405,8 +406,8 @@
                 return;
             }
 
-            if (lockPeriod < 604800) {
-                showNotification('Minimum lock period is 604800 seconds (7 days)', true);
+            if (lockPeriodDays < 7) {
+                showNotification('Minimum lock period is 7 days', true);
                 return;
             }
 
@@ -415,7 +416,7 @@
             try {
                 const weiAmount = ethers.utils.parseEther(ethAmount.toString());
                 
-                const tx = await contract.deposit(lockPeriod, {
+                const tx = await contract.deposit(lockPeriodSeconds, {
                     value: weiAmount
                 });
 

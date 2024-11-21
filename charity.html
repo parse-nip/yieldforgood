@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Donate - Yield For Good</title>
-    <!-- Load ethers from UNPKG CDN -->
     <script src="https://unpkg.com/ethers@5.7.2/dist/ethers.umd.min.js"></script>
     <style>
         * {
@@ -35,7 +34,6 @@
         .logo img {
             height: 60px;
         }
-
 
         .nav {
             display: flex;
@@ -218,6 +216,39 @@
             animation: slideIn 0.3s ease-out;
         }
 
+        .charity-withdrawal {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+
+        .charity-withdrawal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .charity-withdrawal-info {
+            font-size: 0.9em;
+            color: #666;
+            margin: 5px 0;
+        }
+
+        .withdrawal-checkbox {
+            transform: scale(1.2);
+            margin-left: 10px;
+        }
+
+        .locked {
+            color: #ff0000;
+        }
+
+        .unlocked {
+            color: #008000;
+        }
+
         @keyframes slideIn {
             from {
                 transform: translateX(100%);
@@ -258,7 +289,7 @@
         </a>
         <nav class="nav">
             <a href="#about" class="nav-link">About</a>
-            <button onclick="withdrawFunds()" class="withdraw-btn">WITHDRAW</button>
+            <button class="withdraw-btn">WITHDRAW</button>
         </nav>
     </header>
 
@@ -278,7 +309,7 @@
             <h3>Save the Children</h3>
             <p>Giving children a healthy start in life</p>
         </div>
-                <div style="grid-column: 1 / -1; text-align: center; color: #666; font-style: italic; padding: 20px;">
+        <div style="grid-column: 1 / -1; text-align: center; color: #666; font-style: italic; padding: 20px;">
             ~More charities coming soon~
         </div>
     </div>
@@ -301,6 +332,17 @@
                 <button type="submit" class="submit-btn">Confirm Donation</button>
             </form>
             <div id="status-message"></div>
+        </div>
+    </div>
+
+    <div class="modal" id="withdrawModal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeWithdrawModal()">&times;</span>
+            <h2>Withdraw Funds</h2>
+            <div id="charityWithdrawals">
+                <!-- Charity withdrawals will be populated here -->
+            </div>
+            <button onclick="withdrawSelected()" class="submit-btn">Withdraw Selected</button>
         </div>
     </div>
 
@@ -373,35 +415,88 @@
             notification.style.display = 'none';
         }
 
-        async function withdrawFunds() {
-            try {
-                if (!await connectWallet()) return;
-
-                const userAddress = await signer.getAddress();
-                const lockTime = await contract.userLockTime(userAddress);
-                const balance = await contract.depositedAmount(userAddress);
-                const currentTimestamp = Math.floor(Date.now() / 1000);
-
-                if (balance.eq(0)) {
-                    throw new Error('No funds available to withdraw');
-                }
-
-                if (lockTime.gt(currentTimestamp)) {
-                    const remainingTime = lockTime.sub(currentTimestamp);
-                    const days = Math.floor(remainingTime / 86400);
-                    const hours = Math.floor((remainingTime % 86400) / 3600);
-                    const minutes = Math.floor((remainingTime % 3600) / 60);
-                    throw new Error(`Funds are still locked for ${days} days, ${hours} hours, and ${minutes} minutes`);
-                }
-
-                const tx = await contract.withdraw();
-                showNotification('Processing withdrawal...');
+        async function openWithdrawModal() {
+            if (!await connectWallet()) return;
+            
+            const modal = document.getElementById('withdrawModal');
+            const withdrawalsDiv = document.getElementById('charityWithdrawals');
+            withdrawalsDiv.innerHTML = '';
+            
+            const userAddress = await signer.getAddress();
+            const currentTimestamp = Math.floor(Date.now() / 1000);
+            
+            for (const [charityKey, address] of Object.entries(contractAddresses)) {
+                const charityContract = new ethers.Contract(address, contractABI, signer);
                 
-                await tx.wait();
-                showNotification('Withdrawal successful!');
-            } catch (error) {
-                showNotification(error.message, true);
+                try {
+                    const balance = await charityContract.depositedAmount(userAddress);
+                    const lockTime = await charityContract.userLockTime(userAddress);
+                    
+                    if (balance.gt(0)) {
+                        const isLocked = lockTime.gt(currentTimestamp);
+                        let timeLeft = '';
+                        
+                        if (isLocked) {
+                            const remainingTime = lockTime.sub(currentTimestamp);
+                            const days = Math.floor(remainingTime / 86400);
+                            const hours = Math.floor((remainingTime % 86400) / 3600);
+                            const minutes = Math.floor((remainingTime % 3600) / 60);
+                            timeLeft = `${days}d ${hours}h ${minutes}m`;
+                        }
+                        
+                        const charityDiv = document.createElement('div');
+                        charityDiv.className = 'charity-withdrawal';
+                        charityDiv.innerHTML = `
+                            <div class="charity-withdrawal-header">
+                                <h3>${charityKey.toUpperCase()}</h3>
+                                <input type="checkbox" class="withdrawal-checkbox" 
+                                       data-charity="${charityKey}" 
+                                       ${isLocked ? 'disabled' : ''}>
+                            </div>
+                            <div class="charity-withdrawal-info">
+                                Amount: ${ethers.utils.formatEther(balance)} ETH
+                            </div>
+                            <div class="charity-withdrawal-info ${isLocked ? 'locked' : 'unlocked'}">
+                                Status: ${isLocked ? `Locked (${timeLeft} remaining)` : 'Available for withdrawal'}
+                            </div>
+                        `;
+                        withdrawalsDiv.appendChild(charityDiv);
+                    }
+                } catch (error) {
+                    console.error(`Error fetching data for ${charityKey}:`, error);
+                }
             }
+            
+            modal.classList.add('active');
+        }
+
+        function closeWithdrawModal() {
+            const modal = document.getElementById('withdrawModal');
+            modal.classList.remove('active');
+        }
+
+        async function withdrawSelected() {
+            const checkboxes = document.querySelectorAll('.withdrawal-checkbox:checked');
+            if (checkboxes.length === 0) {
+                showNotification('Please select at least one charity to withdraw from', true);
+                return;
+            }
+            
+            for (const checkbox of checkboxes) {
+                const charityKey = checkbox.dataset.charity;
+                const charityContract = new ethers.Contract(contractAddresses[charityKey], contractABI, signer);
+                
+                try {
+                    const tx = await charityContract.withdraw();
+                    showNotification(`Processing withdrawal from ${charityKey.toUpperCase()}...`);
+                    await tx.wait();
+                    showNotification(`Successfully withdrawn from ${charityKey.toUpperCase()}`);
+                } catch (error) {
+                    showNotification(`Error withdrawing from ${charityKey.toUpperCase()}: ${error.message}`, true);
+                }
+            }
+            
+            closeWithdrawModal();
         }
 
         function openModal(charityName, charityKey) {
@@ -429,9 +524,8 @@
             
             const ethAmount = parseFloat(document.getElementById('eth-amount').value);
             const lockPeriodDays = parseInt(document.getElementById('lock-period').value);
-            const lockPeriodSeconds = lockPeriodDays * 24 * 60 * 60; // Convert days to seconds
+            const lockPeriodSeconds = lockPeriodDays * 24 * 60 * 60;
 
-            // Validate minimum amount and lock period
             if (ethAmount < 0.0001) {
                 showNotification('Minimum donation amount is 0.0001 ETH', true);
                 return;
@@ -462,6 +556,8 @@
                 showNotification(error.message, true);
             }
         });
+
+        document.querySelector('.withdraw-btn').onclick = openWithdrawModal;
     </script>
 </body>
 </html>

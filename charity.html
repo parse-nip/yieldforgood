@@ -352,6 +352,12 @@
     </div>
 
     <script>
+
+        const charityDisplayNames = {
+    yfg: "Yield For Good",
+    stchimps: "Save the Chimps",
+    stc: "Save the Children"
+};
         window.addEventListener('load', function() {
             if (typeof window.ethers === 'undefined') {
                 console.error('Ethers library not loaded');
@@ -448,7 +454,7 @@
                         charityDiv.className = 'charity-withdrawal';
                         charityDiv.innerHTML = `
                             <div class="charity-withdrawal-header">
-                                <h3>${charityKey.toUpperCase()}</h3>
+                                <h3>${charityDisplayNames[charityKey] || charityKey.toUpperCase()}</h3>
                                 <input type="checkbox" class="withdrawal-checkbox" 
                                        data-charity="${charityKey}" 
                                        ${isLocked ? 'disabled' : ''}>
@@ -459,8 +465,8 @@
                             <div class="charity-withdrawal-info ${isLocked ? 'locked' : 'unlocked'}">
                                 Status: ${isLocked ? `Locked (${timeLeft} remaining)` : 'Available for withdrawal'}
                             </div>
-                        `;
-                        withdrawalsDiv.appendChild(charityDiv);
+                        `;                        
+                    withdrawalsDiv.appendChild(charityDiv);
                     }
                 } catch (error) {
                     console.error(`Error fetching data for ${charityKey}:`, error);

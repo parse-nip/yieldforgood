@@ -297,8 +297,8 @@
 
         const contractAddresses = {
             yfg: "0xd9582a10448fA9eC8f816782664e97051B0Fd931",
-            stchimps: "0x8113F1b0e1f3Ec96f2db2970CA9a7D950f0adcd5", // Add WWF contract address here
-            stc: "0x48B126cFb1a01c34998a009434c8024D5b617DF5"  // Add Save the Children contract address here
+            stchimps: "0x8113F1b0e1f3Ec96f2db2970CA9a7D950f0adcd5",
+            stc: "0x48B126cFb1a01c34998a009434c8024D5b617DF5"
         };
 
         async function connectWallet() {
@@ -393,10 +393,21 @@
         document.getElementById('donationForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            if (!await connectWallet()) return;
+            const ethAmount = parseFloat(document.getElementById('eth-amount').value);
+            const lockPeriod = parseInt(document.getElementById('lock-period').value);
 
-            const ethAmount = document.getElementById('eth-amount').value;
-            const lockPeriod = document.getElementById('lock-period').value;
+            // Validate minimum amount and lock period
+            if (ethAmount < 0.0001) {
+                showNotification('Minimum donation amount is 0.0001 ETH', true);
+                return;
+            }
+
+            if (lockPeriod < 604800) {
+                showNotification('Minimum lock period is 604800 seconds (7 days)', true);
+                return;
+            }
+
+            if (!await connectWallet()) return;
 
             try {
                 const weiAmount = ethers.utils.parseEther(ethAmount.toString());

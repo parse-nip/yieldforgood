@@ -315,27 +315,27 @@
             <button class="withdraw-btn">WITHDRAW</button>
         </nav>
     </header>
-
-    <div class="charities-grid">
-        <div class="charity-card" onclick="openModal('Yield For Good', 'Yield for Good')">
-            <img src="logo.png" alt="Yield For Good">
-            <h3>Yield For Good</h3>
-            <p>Empowering Change Through Yield</p>
-        </div>
-        <div class="charity-card" onclick="openModal('Save the Chimps', 'Save the Chimps')">
-            <img src="stchimps.png" alt="Save the Chimps">
-            <h3>Save the Chimps</h3>
-            <p>Sanctuary for Life</p>
-        </div>
-        <div class="charity-card" onclick="openModal('Save the Children', 'Save the Children')">
-            <img src="stc.svg" alt="Save the Children">
-            <h3>Save the Children</h3>
-            <p>Giving children a healthy start in life</p>
-        </div>
-        <div style="grid-column: 1 / -1; text-align: center; color: #666; font-style: italic; padding: 20px;">
-            ~More charities coming soon~
-        </div>
+<div class="charities-grid">
+    <div class="charity-card" onclick="openModal('Yield For Good', 'yfg')">
+        <img src="logo.png" alt="Yield For Good">
+        <h3>Yield For Good</h3>
+        <p>Empowering Change Through Yield</p>
     </div>
+    <div class="charity-card" onclick="openModal('Save the Chimps', 'stchimps')">
+        <img src="stchimps.png" alt="Save the Chimps">
+        <h3>Save the Chimps</h3>
+        <p>Sanctuary for Life</p>
+    </div>
+    <div class="charity-card" onclick="openModal('Save the Children', 'stc')">
+        <img src="stc.svg" alt="Save the Children">
+        <h3>Save the Children</h3>
+        <p>Giving children a healthy start in life</p>
+    </div>
+    <div style="grid-column: 1 / -1; text-align: center; color: #666; font-style: italic; padding: 20px;">
+        ~More charities coming soon~
+    </div>
+</div>
+
 
     <div class="modal" id="donationModal">
         <div class="modal-content">
@@ -527,14 +527,19 @@
             
             closeWithdrawModal();
         }
-
-        function openModal(charityName, charityKey) {
-            selectedCharity = charityKey;
-            const modal = document.getElementById('donationModal');
-            const modalTitle = document.getElementById('modalTitle');
-            modalTitle.textContent = `Donate to ${charityName}`;
-            modal.classList.add('active');
-        }
+function openModal(charityName, charityKey) {
+    selectedCharity = charityKey.toLowerCase(); // Ensure lowercase
+    const modal = document.getElementById('donationModal');
+    const modalTitle = document.getElementById('modalTitle');
+    modalTitle.textContent = `Donate to ${charityName}`;
+    
+    // Initialize contract with the selected charity's address
+    if (signer) {
+        contract = new ethers.Contract(contractAddresses[selectedCharity], contractABI, signer);
+    }
+    
+    modal.classList.add('active');
+}
 
         function closeModal() {
             const modal = document.getElementById('donationModal');

@@ -151,6 +151,27 @@
             color: #666;
         }
 
+        .currency-toggle {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            justify-content: center;
+        }
+
+        .toggle-btn {
+            padding: 8px 16px;
+            border: 2px solid #1a1a1a;
+            background: transparent;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-btn.active {
+            background: #1a1a1a;
+            color: white;
+        }
+
         .input-group {
             margin: 20px 0;
         }
@@ -282,27 +303,27 @@
         }
 
         .blast-logo {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    z-index: 1000;
-    width: 100px;
-    height: auto;
-    opacity: 0.9;
-    transition: opacity 0.3s ease;
-}
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            width: 100px;
+            height: auto;
+            opacity: 0.9;
+            transition: opacity 0.3s ease;
+        }
 
-.blast-logo:hover {
-    opacity: 1;
-}
+        .blast-logo:hover {
+            opacity: 1;
+        }
 
-@media (max-width: 768px) {
-    .blast-logo {
-        width: 70px;
-        bottom: 15px;
-        right: 15px;
-    }}
-
+        @media (max-width: 768px) {
+            .blast-logo {
+                width: 70px;
+                bottom: 15px;
+                right: 15px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -315,36 +336,41 @@
             <button class="withdraw-btn">WITHDRAW</button>
         </nav>
     </header>
-<div class="charities-grid">
-    <div class="charity-card" onclick="openModal('Yield For Good', 'yfg')">
-        <img src="logo.png" alt="Yield For Good">
-        <h3>Yield For Good</h3>
-        <p>Empowering Change Through Yield</p>
-    </div>
-    <div class="charity-card" onclick="openModal('Save the Chimps', 'stchimps')">
-        <img src="stchimps.png" alt="Save the Chimps">
-        <h3>Save the Chimps</h3>
-        <p>Sanctuary for Life</p>
-    </div>
-    <div class="charity-card" onclick="openModal('Save the Children', 'stc')">
-        <img src="stc.svg" alt="Save the Children">
-        <h3>Save the Children</h3>
-        <p>Giving children a healthy start in life</p>
-    </div>
-    <div style="grid-column: 1 / -1; text-align: center; color: #666; font-style: italic; padding: 20px;">
-        ~More charities coming soon~
-    </div>
-</div>
 
+    <div class="charities-grid">
+        <div class="charity-card" onclick="openModal('Yield For Good', 'yfg')">
+            <img src="logo.png" alt="Yield For Good">
+            <h3>Yield For Good</h3>
+            <p>Empowering Change Through Yield</p>
+        </div>
+        <div class="charity-card" onclick="openModal('Save the Chimps', 'stchimps')">
+            <img src="stchimps.png" alt="Save the Chimps">
+            <h3>Save the Chimps</h3>
+            <p>Sanctuary for Life</p>
+        </div>
+        <div class="charity-card" onclick="openModal('Save the Children', 'stc')">
+            <img src="stc.svg" alt="Save the Children">
+            <h3>Save the Children</h3>
+            <p>Giving children a healthy start in life</p>
+        </div>
+        <div style="grid-column: 1 / -1; text-align: center; color: #666; font-style: italic; padding: 20px;">
+            ~More charities coming soon~
+        </div>
+    </div>
 
     <div class="modal" id="donationModal">
         <div class="modal-content">
             <span class="close-modal" onclick="closeModal()">&times;</span>
             <h2 id="modalTitle">Donate to Charity</h2>
             <form id="donationForm">
+                <div class="currency-toggle">
+                    <button type="button" class="toggle-btn active" data-currency="eth">ETH</button>
+                    <button type="button" class="toggle-btn" data-currency="usdb">USDB</button>
+                </div>
+                
                 <div class="input-group">
-                    <label for="eth-amount">Donation Amount (ETH)</label>
-                    <input type="number" id="eth-amount" step="0.0001" min="0.0001" placeholder="0.0001" required>
+                    <label for="donation-amount">Donation Amount (<span id="currency-label">ETH</span>)</label>
+                    <input type="number" id="donation-amount" step="0.0001" min="0.0001" placeholder="0.0001" required>
                 </div>
 
                 <div class="input-group">
@@ -375,36 +401,48 @@
     </div>
 
     <script>
-
         const charityDisplayNames = {
-    yfg: "Yield For Good",
-    stchimps: "Save the Chimps",
-    stc: "Save the Children"
-};
-        window.addEventListener('load', function() {
-            if (typeof window.ethers === 'undefined') {
-                console.error('Ethers library not loaded');
-            } else {
-                console.log('Ethers library loaded successfully');
-            }
-        });
+            yfg: "Yield For Good",
+            stchimps: "Save the Chimps",
+            stc: "Save the Children"
+        };
 
         let contract;
         let signer;
         let selectedCharity;
+        let isUSDB = false;
 
         const contractABI = [
-            "function deposit(uint256 lockTime) payable external nonReentrant",
+            "function deposit(uint256 lockTime, bool isUSDB, uint256 amount) payable external nonReentrant",
             "function withdraw() external nonReentrant",
             "function userLockTime(address) public view returns (uint256)",
-            "function depositedAmount(address) public view returns (uint256)"
+            "function depositedAmount(address) public view returns (uint256)",
+            "function depositedAmountUSDB(address) public view returns (uint256)"
         ];
+
+        const USDB_ADDRESS = "YOUR_USDB_CONTRACT_ADDRESS";
+        const USDB_ABI = [
+            "function approve(address spender, uint256 amount) external returns (bool)",
+            "function transferFrom(address sender, address recipient, uint256 amount) external returns (bool)"
+        ];
+        let usdbContract;
 
         const contractAddresses = {
             yfg: "0xd9582a10448fA9eC8f816782664e97051B0Fd931",
             stchimps: "0x8113F1b0e1f3Ec96f2db2970CA9a7D950f0adcd5",
             stc: "0x48B126cFb1a01c34998a009434c8024D5b617DF5"
         };
+
+        // Add currency toggle functionality
+        document.querySelectorAll('.toggle-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                isUSDB = btn.dataset.currency === 'usdb';
+                document.getElementById('currency-label').textContent = isUSDB ? 'USDB' : 'ETH';
+            });
+        });
 
         async function connectWallet() {
             try {
@@ -419,6 +457,7 @@
                 
                 if (selectedCharity) {
                     contract = new ethers.Contract(contractAddresses[selectedCharity], contractABI, signer);
+                    usdbContract = new ethers.Contract(USDB_ADDRESS, USDB_ABI, signer);
                 }
                 
                 return true;
@@ -426,22 +465,6 @@
                 showNotification(error.message, true);
                 return false;
             }
-        }
-
-        function showNotification(message, isError = false) {
-            const notification = document.getElementById('notification');
-            const messageElement = document.getElementById('notification-message');
-            
-            notification.className = 'notification ' + (isError ? 'error' : 'success');
-            messageElement.textContent = message;
-            notification.style.display = 'block';
-
-            setTimeout(closeNotification, 5000);
-        }
-
-        function closeNotification() {
-            const notification = document.getElementById('notification');
-            notification.style.display = 'none';
         }
 
         async function openWithdrawModal() {
@@ -458,10 +481,11 @@
                 const charityContract = new ethers.Contract(address, contractABI, signer);
                 
                 try {
-                    const balance = await charityContract.depositedAmount(userAddress);
+                    const balanceETH = await charityContract.depositedAmount(userAddress);
+                    const balanceUSDB = await charityContract.depositedAmountUSDB(userAddress);
                     const lockTime = await charityContract.userLockTime(userAddress);
                     
-                    if (balance.gt(0)) {
+                    if (balanceETH.gt(0) || balanceUSDB.gt(0)) {
                         const isLocked = lockTime.gt(currentTimestamp);
                         let timeLeft = '';
                         
@@ -483,13 +507,16 @@
                                        ${isLocked ? 'disabled' : ''}>
                             </div>
                             <div class="charity-withdrawal-info">
-                                Amount: ${ethers.utils.formatEther(balance)} ETH
+                                ETH Amount: ${ethers.utils.formatEther(balanceETH)} ETH
+                            </div>
+                            <div class="charity-withdrawal-info">
+                                USDB Amount: ${ethers.utils.formatEther(balanceUSDB)} USDB
                             </div>
                             <div class="charity-withdrawal-info ${isLocked ? 'locked' : 'unlocked'}">
                                 Status: ${isLocked ? `Locked (${timeLeft} remaining)` : 'Available for withdrawal'}
                             </div>
-                        `;                        
-                    withdrawalsDiv.appendChild(charityDiv);
+                        `;
+                        withdrawalsDiv.appendChild(charityDiv);
                     }
                 } catch (error) {
                     console.error(`Error fetching data for ${charityKey}:`, error);
@@ -499,10 +526,91 @@
             modal.classList.add('active');
         }
 
+        function showNotification(message, isError = false) {
+            const notification = document.getElementById('notification');
+            const messageElement = document.getElementById('notification-message');
+            
+            notification.className = 'notification ' + (isError ? 'error' : 'success');
+            messageElement.textContent = message;
+            notification.style.display = 'block';
+
+            setTimeout(closeNotification, 5000);
+        }
+
+        function closeNotification() {
+            const notification = document.getElementById('notification');
+            notification.style.display = 'none';
+        }
+
         function closeWithdrawModal() {
             const modal = document.getElementById('withdrawModal');
             modal.classList.remove('active');
         }
+
+        function openModal(charityName, charityKey) {
+            selectedCharity = charityKey.toLowerCase();
+            const modal = document.getElementById('donationModal');
+            const modalTitle = document.getElementById('modalTitle');
+            modalTitle.textContent = `Donate to ${charityName}`;
+            
+            if (signer) {
+                contract = new ethers.Contract(contractAddresses[selectedCharity], contractABI, signer);
+            }
+            
+            modal.classList.add('active');
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('donationModal');
+            modal.classList.remove('active');
+            document.getElementById('status-message').style.display = 'none';
+        }
+
+        document.getElementById('donationForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const amount = parseFloat(document.getElementById('donation-amount').value);
+            const lockPeriodDays = parseInt(document.getElementById('lock-period').value);
+            const lockPeriodSeconds = lockPeriodDays * 24 * 60 * 60;
+
+            if (amount < 0.0001) {
+                showNotification(`Minimum donation amount is 0.0001 ${isUSDB ? 'USDB' : 'ETH'}`, true);
+                return;
+            }
+
+            if (lockPeriodDays < 7) {
+                showNotification('Minimum lock period is 7 days', true);
+                return;
+            }
+
+            if (!await connectWallet()) return;
+
+            try {
+                const amountWei = ethers.utils.parseEther(amount.toString());
+                
+                if (isUSDB) {
+                    // First approve the contract to spend USDB
+                    const approveTx = await usdbContract.approve(contractAddresses[selectedCharity], amountWei);
+                    await approveTx.wait();
+
+                    // Then make the deposit
+                    const tx = await contract.deposit(lockPeriodSeconds, true, amountWei);
+                    showNotification('Processing USDB transaction...');
+                    await tx.wait();
+                } else {
+                    const tx = await contract.deposit(lockPeriodSeconds, false, 0, {
+                        value: amountWei
+                    });
+                    showNotification('Processing ETH transaction...');
+                    await tx.wait();
+                }
+                
+                showNotification('Donation successful!');
+                setTimeout(closeModal, 2000);
+            } catch (error) {
+                showNotification(error.message, true);
+            }
+        });
 
         async function withdrawSelected() {
             const checkboxes = document.querySelectorAll('.withdrawal-checkbox:checked');
@@ -527,75 +635,10 @@
             
             closeWithdrawModal();
         }
-function openModal(charityName, charityKey) {
-    selectedCharity = charityKey.toLowerCase(); // Ensure lowercase
-    const modal = document.getElementById('donationModal');
-    const modalTitle = document.getElementById('modalTitle');
-    modalTitle.textContent = `Donate to ${charityName}`;
-    
-    // Initialize contract with the selected charity's address
-    if (signer) {
-        contract = new ethers.Contract(contractAddresses[selectedCharity], contractABI, signer);
-    }
-    
-    modal.classList.add('active');
-}
-
-        function closeModal() {
-            const modal = document.getElementById('donationModal');
-            modal.classList.remove('active');
-            document.getElementById('status-message').style.display = 'none';
-        }
-
-        document.getElementById('donationModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeModal();
-            }
-        });
-
-        document.getElementById('donationForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const ethAmount = parseFloat(document.getElementById('eth-amount').value);
-            const lockPeriodDays = parseInt(document.getElementById('lock-period').value);
-            const lockPeriodSeconds = lockPeriodDays * 24 * 60 * 60;
-
-            if (ethAmount < 0.0001) {
-                showNotification('Minimum donation amount is 0.0001 ETH', true);
-                return;
-            }
-
-            if (lockPeriodDays < 7) {
-                showNotification('Minimum lock period is 7 days', true);
-                return;
-            }
-
-            if (!await connectWallet()) return;
-
-            try {
-                const weiAmount = ethers.utils.parseEther(ethAmount.toString());
-                
-                const tx = await contract.deposit(lockPeriodSeconds, {
-                    value: weiAmount
-                });
-
-                showNotification('Processing transaction...');
-                
-                await tx.wait();
-                
-                showNotification('Donation successful!');
-                
-                setTimeout(closeModal, 2000);
-            } catch (error) {
-                showNotification(error.message, true);
-            }
-        });
 
         document.querySelector('.withdraw-btn').onclick = openWithdrawModal;
     </script>
 
-    
-<img src="blast.svg" alt="Blast" class="blast-logo">
-
+    <img src="blast.svg" alt="Blast" class="blast-logo">
 </body>
 </html>

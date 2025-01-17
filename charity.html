@@ -588,24 +588,47 @@
             
             if (isUSDB) {
                 const userAddress = await signer.getAddress();
-                const currentAllowance = await usdbContract.allowance(userAddress, contractAddresses[selectedCharity]);
-                
-                // Only request approval if the current allowance is less than the amount needed
-                if (currentAllowance.lt(amountWei)) {
-                    // Request approval for a very large amount so we don't need to approve again for future donations
-                    const maxApproval = ethers.constants.MaxUint256;
-                    const approveTx = await usdbContract.approve(contractAddresses[selectedCharity], maxApproval);
-                    showNotification('Please approve USDB spending...');
-                    await approveTx.wait();
-                }
+                try {
+                    const currentAllowance = await usdbContract.allowance(userAddress, contractAddresses[selectedCharity]);
+                    
+                    // Only request approval if the current allowance is less than the amount needed
+                    if (currentAllowance.lt(amountWei)) {
+                        // Use a large specific number instead of MaxUint256
+                        // This approves for 1 million USDB
+                        const largeApprovalAmount = ethers.utils.parseEther('1000000');
+                        
+                        try {
+                            showNotification('Please approve USDB spending...');
+                            const approveTx = await usdbContract.approve(
+                                contractAddresses[selectedCharity], 
+                                largeApprovalAmount,
+                                {
+                                    gasLimit: 100000 // Specify gas limit
+                                }
+                            );
+                            await approveTx.wait();
+                        } catch (approvalError) {
+                            console.error('Approval Error Details:', approvalError);
+                            showNotification('Failed to approve USDB. Please try again.', true);
+                            return;
+                        }
+                    }
 
-                // Proceed with the deposit
-                const tx = await contract.deposit(lockPeriodSeconds, true, amountWei);
-                showNotification('Processing USDB transaction...');
-                await tx.wait();
+                    // Proceed with the deposit
+                    const tx = await contract.deposit(lockPeriodSeconds, true, amountWei, {
+                        gasLimit: 200000 // Specify gas limit for deposit
+                    });
+                    showNotification('Processing USDB transaction...');
+                    await tx.wait();
+                } catch (allowanceError) {
+                    console.error('Allowance Check Error:', allowanceError);
+                    showNotification('Error checking USDB allowance. Please try again.', true);
+                    return;
+                }
             } else {
                 const tx = await contract.deposit(lockPeriodSeconds, false, 0, {
-                    value: amountWei
+                    value: amountWei,
+                    gasLimit: 200000 // Specify gas limit for ETH deposit
                 });
                 showNotification('Processing ETH transaction...');
                 await tx.wait();
@@ -614,7 +637,13 @@
             showNotification('Donation successful!');
             setTimeout(closeModal, 2000);
         } catch (error) {
-            showNotification(error.message, true);
+            console.error('Transaction Error:', error);
+            showNotification(
+                error.message.includes('user rejected') 
+                    ? 'Transaction was cancelled.' 
+                    : 'Transaction failed. Please try again.',
+                true
+            );
         }
     });
 

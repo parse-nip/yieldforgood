@@ -420,7 +420,7 @@
             "function depositedAmountUSDB(address) public view returns (uint256)"
         ];
 
-        const USDB_ADDRESS = "YOUR_USDB_CONTRACT_ADDRESS";
+        const USDB_ADDRESS = "0x4300000000000000000000000000000000000003";
         const USDB_ABI = [
             "function approve(address spender, uint256 amount) external returns (bool)",
             "function transferFrom(address sender, address recipient, uint256 amount) external returns (bool)"
@@ -428,9 +428,7 @@
         let usdbContract;
 
         const contractAddresses = {
-            yfg: "0xd9582a10448fA9eC8f816782664e97051B0Fd931",
-            stchimps: "0x8113F1b0e1f3Ec96f2db2970CA9a7D950f0adcd5",
-            stc: "0x48B126cFb1a01c34998a009434c8024D5b617DF5"
+            yfg: "0x1807b73a78f55385443B54B75dBc18f7Ca07AaF5",
         };
 
         // Add currency toggle functionality

@@ -371,204 +371,148 @@ angelscript
 <script>
 
 window.addEventListener('DOMContentLoaded', async () => {
-
-const CONTRACT_ADDRESSES = [
-
-'0xd9582a10448fA9eC8f816782664e97051B0Fd931',
-
-// Add more contract addresses here
-
-'0x48B126cFb1a01c34998a009434c8024D5b617DF5',
-
-'0x48B126cFb1a01c34998a009434c8024D5b617DF5'
-
-];
-
-const CONTRACT_ABI = [
-
-{
-
-"inputs": [],
-
-"name": "fetchYieldAmount",
-
-"outputs": [{"type": "uint256"}],
-
-"stateMutability": "view",
-
-"type": "function"
-
-},
-
-{
-
-"inputs": [],
-
-"name": "totalAmount",
-
-"outputs": [{"type": "uint256"}],
-
-"stateMutability": "view",
-
-"type": "function"
-
-}
-
-];
-
-async function connectContract(address) {
-
-try {
-
-if (typeof ethers === 'undefined') {
-
-throw new Error('Ethers library not loaded');
-
-}
-
-const blastRPC = "https://rpc.blast.io";
-
-const provider = new ethers.providers.JsonRpcProvider(blastRPC);
-
-const contract = new ethers.Contract(
-
-address,
-
-CONTRACT_ABI,
-
-provider
-
-);
-
-return contract;
-
-} catch (error) {
-
-console.error('Error connecting to contract:', error);
-
-return null;
-
-}
-
-}
-
-function formatAmount(amount) {
-
-try {
-
-const formattedAmount = ethers.utils.formatEther(amount);
-
-return parseFloat(formattedAmount).toFixed(4);
-
-} catch (error) {
-
-console.error('Error formatting amount:', error);
-
-return '0.0000';
-
-}
-
-}
-
-async function fetchAllContractsData() {
-
-const results = {
-
-totalYield: ethers.BigNumber.from(0),
-
-totalAmount: ethers.BigNumber.from(0),
-
-errors: []
-
-};
-
-for (const address of CONTRACT_ADDRESSES) {
-
-const contract = await connectContract(address);
-
-if (!contract) {
-
-results.errors.push(`Failed to connect to contract ${address}`);
-
-continue;
-
-}
-
-try {
-
-const yieldAmount = await contract.fetchYieldAmount();
-
-results.totalYield = results.totalYield.add(yieldAmount);
-
-} catch (error) {
-
-results.errors.push(`Error fetching yield from ${address}`);
-
-}
-
-try {
-
-const amount = await contract.totalAmount();
-
-results.totalAmount = results.totalAmount.add(amount);
-
-} catch (error) {
-
-results.errors.push(`Error fetching total amount from ${address}`);
-
-}
-
-}
-
-return results;
-
-}
-
-async function updateStats() {
-
-console.log('Starting updateStats...');
-
-const yieldElement = document.getElementById('yieldAmount');
-
-const totalElement = document.getElementById('totalAmount');
-
-const yieldErrorElement = document.getElementById('yieldError');
-
-const totalErrorElement = document.getElementById('totalError');
-
-const results = await fetchAllContractsData();
-
-if (results.errors.length > 0) {
-
-const errorMessage = results.errors.join('; ');
-
-yieldErrorElement.textContent = errorMessage;
-
-totalErrorElement.textContent = errorMessage;
-
-} else {
-
-yieldErrorElement.textContent = '';
-
-totalErrorElement.textContent = '';
-
-}
-
-yieldElement.textContent = formatAmount(results.totalYield) + ' ETH';
-
-totalElement.textContent = formatAmount(results.totalAmount) + ' ETH';
-
-}
-
-// Initial update
-
-await updateStats();
-
-// Update stats every 30 seconds
-
-setInterval(updateStats, 30000);
-
+    const CONTRACT_ADDRESSES = [
+        '0x1807b73a78f55385443B54B75dBc18f7Ca07AaF5'
+    ];
+
+    const CONTRACT_ABI = [
+        {
+            "inputs": [],
+            "name": "fetchYieldAmountETH",
+            "outputs": [{"type": "uint256"}],
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "inputs": [],
+            "name": "totalAmountETH",
+            "outputs": [{"type": "uint256"}],
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "inputs": [],
+            "name": "fetchYieldAmountUSDB",
+            "outputs": [{"type": "uint256"}],
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "inputs": [],
+            "name": "totalAmountUSDB",
+            "outputs": [{"type": "uint256"}],
+            "stateMutability": "view",
+            "type": "function"
+        }
+    ];
+
+    async function connectContract(address) {
+        try {
+            if (typeof ethers === 'undefined') {
+                throw new Error('Ethers library not loaded');
+            }
+            const blastRPC = "https://rpc.blast.io";
+            const provider = new ethers.providers.JsonRpcProvider(blastRPC);
+            const contract = new ethers.Contract(
+                address,
+                CONTRACT_ABI,
+                provider
+            );
+            return contract;
+        } catch (error) {
+            console.error('Error connecting to contract:', error);
+            return null;
+        }
+    }
+
+    function formatAmount(amount) {
+        try {
+            const formattedAmount = ethers.utils.formatEther(amount);
+            return parseFloat(formattedAmount).toFixed(4);
+        } catch (error) {
+            console.error('Error formatting amount:', error);
+            return '0.0000';
+        }
+    }
+
+    async function fetchAllContractsData() {
+        const results = {
+            totalYieldETH: ethers.BigNumber.from(0),
+            totalAmountETH: ethers.BigNumber.from(0),
+            totalYieldUSDB: ethers.BigNumber.from(0),
+            totalAmountUSDB: ethers.BigNumber.from(0),
+            errors: []
+        };
+
+        for (const address of CONTRACT_ADDRESSES) {
+            const contract = await connectContract(address);
+            if (!contract) {
+                results.errors.push(`Failed to connect to contract ${address}`);
+                continue;
+            }
+
+            try {
+                const yieldAmountETH = await contract.fetchYieldAmountETH();
+                results.totalYieldETH = results.totalYieldETH.add(yieldAmountETH);
+            } catch (error) {
+                results.errors.push(`Error fetching ETH yield from ${address}`);
+            }
+
+            try {
+                const amountETH = await contract.totalAmountETH();
+                results.totalAmountETH = results.totalAmountETH.add(amountETH);
+            } catch (error) {
+                results.errors.push(`Error fetching total ETH amount from ${address}`);
+            }
+
+            try {
+                const yieldAmountUSDB = await contract.fetchYieldAmountUSDB();
+                results.totalYieldUSDB = results.totalYieldUSDB.add(yieldAmountUSDB);
+            } catch (error) {
+                results.errors.push(`Error fetching USDB yield from ${address}`);
+            }
+
+            try {
+                const amountUSDB = await contract.totalAmountUSDB();
+                results.totalAmountUSDB = results.totalAmountUSDB.add(amountUSDB);
+            } catch (error) {
+                results.errors.push(`Error fetching total USDB amount from ${address}`);
+            }
+        }
+
+        return results;
+    }
+
+    async function updateStats() {
+        console.log('Starting updateStats...');
+        const ethYieldElement = document.getElementById('ethYieldAmount');
+        const ethTotalElement = document.getElementById('ethTotalAmount');
+        const usdbYieldElement = document.getElementById('usdbYieldAmount');
+        const usdbTotalElement = document.getElementById('usdbTotalAmount');
+        const errorElement = document.getElementById('error');
+
+        const results = await fetchAllContractsData();
+
+        if (results.errors.length > 0) {
+            const errorMessage = results.errors.join('; ');
+            errorElement.textContent = errorMessage;
+        } else {
+            errorElement.textContent = '';
+        }
+
+        ethYieldElement.textContent = formatAmount(results.totalYieldETH) + ' ETH';
+        ethTotalElement.textContent = formatAmount(results.totalAmountETH) + ' ETH';
+        usdbYieldElement.textContent = formatAmount(results.totalYieldUSDB) + ' USDB';
+        usdbTotalElement.textContent = formatAmount(results.totalAmountUSDB) + ' USDB';
+    }
+
+    // Initial update
+    await updateStats();
+
+    // Update stats every 30 seconds
+    setInterval(updateStats, 30000);
 });
+
 
 </script>
 

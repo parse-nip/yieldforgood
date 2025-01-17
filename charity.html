@@ -421,10 +421,11 @@
         ];
 
         const USDB_ADDRESS = "0x4300000000000000000000000000000000000003";
-        const USDB_ABI = [
-            "function approve(address spender, uint256 amount) external returns (bool)",
-            "function transferFrom(address sender, address recipient, uint256 amount) external returns (bool)"
-        ];
+    const USDB_ABI = [
+        "function approve(address spender, uint256 amount) external returns (bool)",
+        "function transferFrom(address sender, address recipient, uint256 amount) external returns (bool)",
+        "function allowance(address owner, address spender) external view returns (uint256)"
+    ];
         let usdbContract;
 
         const contractAddresses = {
@@ -563,52 +564,59 @@
             modal.classList.remove('active');
             document.getElementById('status-message').style.display = 'none';
         }
+    document.getElementById('donationForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const amount = parseFloat(document.getElementById('donation-amount').value);
+        const lockPeriodDays = parseInt(document.getElementById('lock-period').value);
+        const lockPeriodSeconds = lockPeriodDays * 24 * 60 * 60;
 
-        document.getElementById('donationForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
+        if (amount < 0.0001) {
+            showNotification(`Minimum donation amount is 0.0001 ${isUSDB ? 'USDB' : 'ETH'}`, true);
+            return;
+        }
+
+        if (lockPeriodDays < 7) {
+            showNotification('Minimum lock period is 7 days', true);
+            return;
+        }
+
+        if (!await connectWallet()) return;
+
+        try {
+            const amountWei = ethers.utils.parseEther(amount.toString());
             
-            const amount = parseFloat(document.getElementById('donation-amount').value);
-            const lockPeriodDays = parseInt(document.getElementById('lock-period').value);
-            const lockPeriodSeconds = lockPeriodDays * 24 * 60 * 60;
-
-            if (amount < 0.0001) {
-                showNotification(`Minimum donation amount is 0.0001 ${isUSDB ? 'USDB' : 'ETH'}`, true);
-                return;
-            }
-
-            if (lockPeriodDays < 7) {
-                showNotification('Minimum lock period is 7 days', true);
-                return;
-            }
-
-            if (!await connectWallet()) return;
-
-            try {
-                const amountWei = ethers.utils.parseEther(amount.toString());
+            if (isUSDB) {
+                const userAddress = await signer.getAddress();
+                const currentAllowance = await usdbContract.allowance(userAddress, contractAddresses[selectedCharity]);
                 
-                if (isUSDB) {
-                    // First approve the contract to spend USDB
-                    const approveTx = await usdbContract.approve(contractAddresses[selectedCharity], amountWei);
+                // Only request approval if the current allowance is less than the amount needed
+                if (currentAllowance.lt(amountWei)) {
+                    // Request approval for a very large amount so we don't need to approve again for future donations
+                    const maxApproval = ethers.constants.MaxUint256;
+                    const approveTx = await usdbContract.approve(contractAddresses[selectedCharity], maxApproval);
+                    showNotification('Please approve USDB spending...');
                     await approveTx.wait();
-
-                    // Then make the deposit
-                    const tx = await contract.deposit(lockPeriodSeconds, true, amountWei);
-                    showNotification('Processing USDB transaction...');
-                    await tx.wait();
-                } else {
-                    const tx = await contract.deposit(lockPeriodSeconds, false, 0, {
-                        value: amountWei
-                    });
-                    showNotification('Processing ETH transaction...');
-                    await tx.wait();
                 }
-                
-                showNotification('Donation successful!');
-                setTimeout(closeModal, 2000);
-            } catch (error) {
-                showNotification(error.message, true);
+
+                // Proceed with the deposit
+                const tx = await contract.deposit(lockPeriodSeconds, true, amountWei);
+                showNotification('Processing USDB transaction...');
+                await tx.wait();
+            } else {
+                const tx = await contract.deposit(lockPeriodSeconds, false, 0, {
+                    value: amountWei
+                });
+                showNotification('Processing ETH transaction...');
+                await tx.wait();
             }
-        });
+            
+            showNotification('Donation successful!');
+            setTimeout(closeModal, 2000);
+        } catch (error) {
+            showNotification(error.message, true);
+        }
+    });
 
         async function withdrawSelected() {
             const checkboxes = document.querySelectorAll('.withdrawal-checkbox:checked');

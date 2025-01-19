@@ -388,215 +388,105 @@ right: 30px;
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
 
 <script>
-
 window.addEventListener('DOMContentLoaded', async () => {
-
-const CONTRACT_ADDRESSES = [
-
-'0x1807b73a78f55385443B54B75dBc18f7Ca07AaF5'
-
-];
-
-const CONTRACT_ABI = [
-
-{
-
-"inputs": [],
-
-"name": "fetchYieldAmount",
-
-"outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
-
-"stateMutability": "view",
-
-"type": "function"
-
-},
-
-{
-
-"inputs": [],
-
-"name": "totalAmount",
-
-"outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
-
-"stateMutability": "view",
-
-"type": "function"
-
-}
-
-];
-
-async function verifyContract(provider, address) {
-
-const code = await provider.getCode(address);
-
-return code !== '0x';
-
-}
-
-async function connectContract(address) {
-
-try {
-
-if (typeof window.ethers === 'undefined') {
-
-throw new Error('Ethers library not loaded');
-
-}
-
-const blastRPC = "https://rpc.blast.io";
-
-const provider = new ethers.providers.JsonRpcProvider(blastRPC);
-
-await provider.ready;
-
-// Verify contract exists at address
-
-const hasCode = await verifyContract(provider, address);
-
-if (!hasCode) {
-
-throw new Error(`No contract found at ${address}`);
-
-}
-
-return new ethers.Contract(
-
-address,
-
-CONTRACT_ABI,
-
-provider
-
-);
-
-} catch (error) {
-
-console.error('Error connecting to contract:', error);
-
-return null;
-
-}
-
-}
-
-async function fetchContractData(contract) {
-
-const results = {
-
-yield: ethers.BigNumber.from(0),
-
-total: ethers.BigNumber.from(0),
-
-errors: []
-
-};
-
-try {
-
-// Try simpler call first to verify basic connectivity
-
-const code = await contract.provider.getCode(contract.address);
-
-console.log('Contract code length:', (code.length - 2) / 2, 'bytes');
-
-try {
-
-results.yield = await contract.fetchYieldAmount();
-
-} catch (error) {
-
-console.error('Yield fetch error:', error);
-
-results.errors.push(`Cannot fetch yield: ${error.reason || error.message}`);
-
-}
-
-try {
-
-results.total = await contract.totalAmount();
-
-} catch (error) {
-
-console.error('Total fetch error:', error);
-
-results.errors.push(`Cannot fetch total: ${error.reason || error.message}`);
-
-}
-
-} catch (error) {
-
-results.errors.push(`Contract interaction failed: ${error.message}`);
-
-}
-
-return results;
-
-}
-
-async function updateStats() {
-
-const yieldElement = document.getElementById('yieldAmount');
-
-const totalElement = document.getElementById('totalAmount');
-
-const yieldErrorElement = document.getElementById('yieldError');
-
-const totalErrorElement = document.getElementById('totalError');
-
-yieldElement.textContent = 'Checking...';
-
-totalElement.textContent = 'Checking...';
-
-yieldErrorElement.textContent = '';
-
-totalErrorElement.textContent = '';
-
-for (const address of CONTRACT_ADDRESSES) {
-
-const contract = await connectContract(address);
-
-if (!contract) {
-
-yieldErrorElement.textContent = `Failed to connect to contract`;
-
-totalErrorElement.textContent = `Failed to connect to contract`;
-
-continue;
-
-}
-
-const data = await fetchContractData(contract);
-
-if (data.errors.length > 0) {
-
-yieldErrorElement.textContent = data.errors.join('; ');
-
-totalErrorElement.textContent = data.errors.join('; ');
-
-}
-
-yieldElement.textContent = data.yield.toString() + ' ETH';
-
-totalElement.textContent = data.total.toString() + ' ETH';
-
-}
-
-}
-
-// Initial update
-
-await updateStats();
-
-// Update every 30 seconds
-
-setInterval(updateStats, 30000);
-
+    const CONTRACT_ADDRESSES = ['0x1807b73a78f55385443B54B75dBc18f7Ca07AaF5'];
+    const CONTRACT_ABI = [
+        {
+            "inputs": [],
+            "name": "fetchYieldAmount",
+            "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "inputs": [],
+            "name": "totalAmount",
+            "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+            "stateMutability": "view",
+            "type": "function"
+        }
+    ];
+
+    async function connectContract(address) {
+        try {
+            if (typeof window.ethers === 'undefined') {
+                throw new Error('Ethers library not loaded');
+            }
+
+            const blastRPC = "https://rpc.blast.io";
+            const provider = new ethers.providers.JsonRpcProvider(blastRPC);
+            await provider.ready;
+
+            const hasCode = await verifyContract(provider, address);
+            if (!hasCode) {
+                throw new Error(`No contract found at ${address}`);
+            }
+
+            return new ethers.Contract(address, CONTRACT_ABI, provider);
+        } catch (error) {
+            console.error('Error connecting to contract:', error);
+            return null;
+        }
+    }
+
+    async function fetchContractData(contract) {
+        const results = {
+            yield: ethers.BigNumber.from(0),
+            total: ethers.BigNumber.from(0),
+            errors: []
+        };
+
+        try {
+            const code = await contract.provider.getCode(contract.address);
+            console.log('Contract code length:', (code.length - 2) / 2, 'bytes');
+
+            results.yield = await contract.fetchYieldAmount();
+            results.total = await contract.totalAmount();
+        } catch (error) {
+            results.errors.push(`Contract interaction failed: ${error.message}`);
+        }
+
+        return results;
+    }
+
+    async function updateStats() {
+        const yieldElement = document.getElementById('yieldAmount');
+        const totalElement = document.getElementById('totalAmount');
+        const yieldErrorElement = document.getElementById('yieldError');
+        const totalErrorElement = document.getElementById('totalError');
+
+        yieldElement.textContent = 'Checking...';
+        totalElement.textContent = 'Checking...';
+        yieldErrorElement.textContent = '';
+        totalErrorElement.textContent = '';
+
+        for (const address of CONTRACT_ADDRESSES) {
+            const contract = await connectContract(address);
+            if (!contract) {
+                yieldErrorElement.textContent = 'Failed to connect to contract';
+                totalErrorElement.textContent = 'Failed to connect to contract';
+                continue;
+            }
+
+            const data = await fetchContractData(contract);
+            if (data.errors.length > 0) {
+                yieldErrorElement.textContent = data.errors.join('; ');
+                totalErrorElement.textContent = data.errors.join('; ');
+            } else {
+                yieldElement.textContent = ethers.utils.formatEther(data.yield) + ' ETH';
+                totalElement.textContent = ethers.utils.formatEther(data.total) + ' ETH';
+            }
+        }
+    }
+
+    // Initial update
+    await updateStats();
+
+    // Update every 30 seconds
+    setInterval(updateStats, 30000);
 });
-<img src="blast.svg" alt="Blast" class="blast-logo">
+</script>
+    <img src="blast.svg" alt="Blast" class="blast-logo">
 
 </body>
 

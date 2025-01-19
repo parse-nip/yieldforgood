@@ -407,6 +407,11 @@ window.addEventListener('DOMContentLoaded', async () => {
         }
     ];
 
+    async function verifyContract(provider, address) {
+        const code = await provider.getCode(address);
+        return code !== '0x';
+    }
+
     async function connectContract(address) {
         try {
             if (typeof window.ethers === 'undefined') {

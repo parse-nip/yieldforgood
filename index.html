@@ -393,7 +393,14 @@ window.addEventListener('DOMContentLoaded', async () => {
     const CONTRACT_ABI = [
         {
             "inputs": [],
-            "name": "fetchYieldAmount",
+            "name": "fetchYieldAmountETH",
+            "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "inputs": [],
+            "name": "fetchYieldAmountUSDB",
             "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
             "stateMutability": "view",
             "type": "function"
@@ -436,8 +443,9 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     async function fetchContractData(contract) {
         const results = {
-            yield: ethers.BigNumber.from(0),
-            total: ethers.BigNumber.from(0),
+            yieldETH: ethers.BigNumber.from(0),
+            yieldUSDC: ethers.BigNumber.from(0),
+            totalAmount: ethers.BigNumber.from(0),
             errors: []
         };
 
@@ -445,8 +453,9 @@ window.addEventListener('DOMContentLoaded', async () => {
             const code = await contract.provider.getCode(contract.address);
             console.log('Contract code length:', (code.length - 2) / 2, 'bytes');
 
-            results.yield = await contract.fetchYieldAmount();
-            results.total = await contract.totalAmount();
+            results.yieldETH = await contract.fetchYieldAmountETH();
+            results.yieldUSDC = await contract.fetchYieldAmountUSDB();
+            results.totalAmount = await contract.totalAmount();
         } catch (error) {
             results.errors.push(`Contract interaction failed: ${error.message}`);
         }
@@ -455,31 +464,30 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
 
     async function updateStats() {
-        const yieldElement = document.getElementById('yieldAmount');
-        const totalElement = document.getElementById('totalAmount');
-        const yieldErrorElement = document.getElementById('yieldError');
-        const totalErrorElement = document.getElementById('totalError');
+        const yieldETHElement = document.getElementById('yieldAmount');
+        const yieldUSDCElement = document.getElementById('yieldUSDCAmount');
+        const totalAmountElement = document.getElementById('totalAmount');
+        const errorElement = document.getElementById('contractError');
 
-        yieldElement.textContent = 'Checking...';
-        totalElement.textContent = 'Checking...';
-        yieldErrorElement.textContent = '';
-        totalErrorElement.textContent = '';
+        yieldETHElement.textContent = 'Checking...';
+        yieldUSDCElement.textContent = 'Checking...';
+        totalAmountElement.textContent = 'Checking...';
+        errorElement.textContent = '';
 
         for (const address of CONTRACT_ADDRESSES) {
             const contract = await connectContract(address);
             if (!contract) {
-                yieldErrorElement.textContent = 'Failed to connect to contract';
-                totalErrorElement.textContent = 'Failed to connect to contract';
+                errorElement.textContent = 'Failed to connect to contract';
                 continue;
             }
 
             const data = await fetchContractData(contract);
             if (data.errors.length > 0) {
-                yieldErrorElement.textContent = data.errors.join('; ');
-                totalErrorElement.textContent = data.errors.join('; ');
+                errorElement.textContent = data.errors.join('; ');
             } else {
-                yieldElement.textContent = ethers.utils.formatEther(data.yield) + ' ETH';
-                totalElement.textContent = ethers.utils.formatEther(data.total) + ' ETH';
+                yieldETHElement.textContent = ethers.utils.formatEther(data.yieldETH) + ' ETH';
+                yieldUSDCElement.textContent = ethers.utils.formatUnits(data.yieldUSDC, 6) + ' USDC';
+                totalAmountElement.textContent = ethers.utils.formatEther(data.totalAmount) + ' ETH';
             }
         }
     }

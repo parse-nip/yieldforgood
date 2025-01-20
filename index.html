@@ -402,6 +402,20 @@ right: 30px;
             "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
             "stateMutability": "view",
             "type": "function"
+        },
+        {
+            "inputs": [],
+            "name": "fetchYieldAmountUSDB",
+            "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "inputs": [],
+            "name": "totalAmountUSDB",
+            "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+            "stateMutability": "view",
+            "type": "function"
         }
     ];
 
@@ -415,36 +429,71 @@ right: 30px;
         }
     }
 
+    async function getETHPrice() {
+        try {
+            const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd');
+            const data = await response.json();
+            return data.ethereum.usd;
+        } catch (error) {
+            console.error('Error fetching ETH price:', error);
+            return null;
+        }
+    }
+
     function formatETH(value) {
-        // Convert to number and fix to 4 decimal places
         return Number(ethers.utils.formatEther(value)).toFixed(4);
     }
 
+    function formatUSD(value) {
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD'
+        }).format(value);
+    }
+
     async function updateStats() {
-        const yieldElement = document.getElementById('yieldAmount');
-        const totalElement = document.getElementById('totalAmount');
-        const yieldError = document.getElementById('yieldError');
-        const totalError = document.getElementById('totalError');
+        const ethYieldElement = document.getElementById('ethYieldAmount');
+        const ethTotalElement = document.getElementById('ethTotalAmount');
+        const usdbYieldElement = document.getElementById('usdbYieldAmount');
+        const usdbTotalElement = document.getElementById('usdbTotalAmount');
+        const ethError = document.getElementById('ethError');
+        const usdbError = document.getElementById('usdbError');
 
         try {
             const contract = await connectToContract();
+            const ethPrice = await getETHPrice();
+
             if (!contract) {
                 throw new Error('Failed to connect to contract');
             }
 
-            const yieldAmount = await contract.fetchYieldAmountETH();
-            const totalAmount = await contract.totalAmountETH();
+            const ethYield = await contract.fetchYieldAmountETH();
+            const ethTotal = await contract.totalAmountETH();
+            const usdbYield = await contract.fetchYieldAmountUSDB();
+            const usdbTotal = await contract.totalAmountUSDB();
 
-            yieldElement.textContent = `${formatETH(yieldAmount)} ETH`;
-            totalElement.textContent = `${formatETH(totalAmount)} ETH`;
+            // Format ETH values and convert to USD
+            const ethYieldUSD = formatETH(ethYield) * ethPrice;
+            const ethTotalUSD = formatETH(ethTotal) * ethPrice;
             
-            yieldError.textContent = '';
-            totalError.textContent = '';
+            // Format USDB values (USDB is pegged 1:1 to USD)
+            const usdbYieldUSD = formatETH(usdbYield);
+            const usdbTotalUSD = formatETH(usdbTotal);
+
+            ethYieldElement.textContent = `${formatUSD(ethYieldUSD)} (${formatETH(ethYield)} ETH)`;
+            ethTotalElement.textContent = `${formatUSD(ethTotalUSD)} (${formatETH(ethTotal)} ETH)`;
+            usdbYieldElement.textContent = formatUSD(usdbYieldUSD);
+            usdbTotalElement.textContent = formatUSD(usdbTotalUSD);
+            
+            ethError.textContent = '';
+            usdbError.textContent = '';
         } catch (error) {
-            yieldElement.textContent = 'Error';
-            totalElement.textContent = 'Error';
-            yieldError.textContent = error.message;
-            totalError.textContent = error.message;
+            ethYieldElement.textContent = 'Error';
+            ethTotalElement.textContent = 'Error';
+            usdbYieldElement.textContent = 'Error';
+            usdbTotalElement.textContent = 'Error';
+            ethError.textContent = error.message;
+            usdbError.textContent = error.message;
         }
     }
 
@@ -453,8 +502,7 @@ right: 30px;
 
     // Update every 30 seconds
     setInterval(updateStats, 30000);
-</script>
-    
+</script>    
     <img src="blast.svg" alt="Blast" class="blast-logo">
 
 </body>

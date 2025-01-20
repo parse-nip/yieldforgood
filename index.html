@@ -385,82 +385,71 @@ right: 30px;
 
 <script>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
-    <script>
-const CONTRACT_ADDRESSES = ['0x1807b73a78f55385443B54B75dBc18f7Ca07AaF5'];
-const CONTRACT_ABI = [
-  {
-    "inputs": [],
-    "name": "fetchYieldAmountETH",
-    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "fetchYieldAmountUSDB",
-    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "totalAmount",
-    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
-    "stateMutability": "view",
-    "type": "function"
-  }
-];
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+<script>
+    const CONTRACT_ADDRESS = '0x1807b73a78f55385443B54B75dBc18f7Ca07AaF5';
+    const CONTRACT_ABI = [
+        {
+            "inputs": [],
+            "name": "fetchYieldAmountETH",
+            "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "inputs": [],
+            "name": "totalAmountETH",
+            "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+            "stateMutability": "view",
+            "type": "function"
+        }
+    ];
 
-let contract;
+    async function connectToContract() {
+        try {
+            const provider = new ethers.providers.JsonRpcProvider("https://rpc.blast.io");
+            return new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+        } catch (error) {
+            console.error('Error connecting to contract:', error);
+            return null;
+        }
+    }
 
-async function initContract() {
-  if (typeof window.ethers === 'undefined') {
-    throw new Error('Ethers library not loaded');
-  }
+    async function updateStats() {
+        const yieldElement = document.getElementById('yieldAmount');
+        const totalElement = document.getElementById('totalAmount');
+        const yieldError = document.getElementById('yieldError');
+        const totalError = document.getElementById('totalError');
 
-  const blastRPC = "https://rpc.blast.io";
-  const provider = new ethers.providers.JsonRpcProvider(blastRPC);
-  await provider.ready;
+        try {
+            const contract = await connectToContract();
+            if (!contract) {
+                throw new Error('Failed to connect to contract');
+            }
 
-  contract = new ethers.Contract(CONTRACT_ADDRESSES[0], CONTRACT_ABI, provider);
-}
+            const yieldAmount = await contract.fetchYieldAmountETH();
+            const totalAmount = await contract.totalAmountETH();
 
-async function updateStats() {
-  const charitiesNumberElement = document.getElementById('charitiesNumber');
-  const yieldAmountElement = document.getElementById('yieldAmount');
-  const totalAmountElement = document.getElementById('totalAmount');
-  const errorElement = document.getElementById('yieldError');
-  const totalErrorElement = document.getElementById('totalError');
+            yieldElement.textContent = `${ethers.utils.formatEther(yieldAmount)} ETH`;
+            totalElement.textContent = `${ethers.utils.formatEther(totalAmount)} ETH`;
+            
+            yieldError.textContent = '';
+            totalError.textContent = '';
+        } catch (error) {
+            yieldElement.textContent = 'Error';
+            totalElement.textContent = 'Error';
+            yieldError.textContent = error.message;
+            totalError.textContent = error.message;
+        }
+    }
 
-  try {
-    const yieldETH = await contract.fetchYieldAmountETH();
-    const yieldUSDC = await contract.fetchYieldAmountUSDB();
-    const totalAmount = await contract.totalAmount();
+    // Initial update
+    updateStats();
 
-    charitiesNumberElement.textContent = '3';
-    yieldAmountElement.textContent = ethers.utils.formatEther(yieldETH) + ' ETH';
-    totalAmountElement.textContent = ethers.utils.formatEther(totalAmount) + ' ETH';
+    // Update every 30 seconds
+    setInterval(updateStats, 30000);
+</script>
 
-    errorElement.textContent = '';
-    totalErrorElement.textContent = '';
-  } catch (error) {
-    charitiesNumberElement.textContent = '3';
-    yieldAmountElement.textContent = 'Error';
-    totalAmountElement.textContent = 'Error';
-    errorElement.textContent = 'Error fetching yield amount: ' + error.message;
-    totalErrorElement.textContent = 'Error fetching total amount: ' + error.message;
-  }
-}
-
-async function main() {
-  await initContract();
-  await updateStats();
-  setInterval(updateStats, 10000); // Update every 10 seconds
-}
-
-main();
-    </script>
 
     
     <img src="blast.svg" alt="Blast" class="blast-logo">

@@ -402,59 +402,86 @@ right: 30px;
             "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
             "stateMutability": "view",
             "type": "function"
+        },
+        {
+            "inputs": [],
+            "name": "fetchYieldAmountUSDB",
+            "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "inputs": [],
+            "name": "totalAmountUSDB",
+            "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+            "stateMutability": "view",
+            "type": "function"
         }
     ];
-
-    async function connectToContract() {
-        try {
-            const provider = new ethers.providers.JsonRpcProvider("https://rpc.blast.io");
-            return new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
-        } catch (error) {
-            console.error('Error connecting to contract:', error);
-            return null;
-        }
-    }
-
-    function formatETH(value) {
-        // Convert to number and fix to 4 decimal places
-        return Number(ethers.utils.formatEther(value)).toFixed(4);
-    }
-
-    async function updateStats() {
-        const yieldElement = document.getElementById('yieldAmount');
-        const totalElement = document.getElementById('totalAmount');
-        const yieldError = document.getElementById('yieldError');
-        const totalError = document.getElementById('totalError');
-
-        try {
-            const contract = await connectToContract();
-            if (!contract) {
-                throw new Error('Failed to connect to contract');
-            }
-
-            const yieldAmount = await contract.fetchYieldAmountETH();
-            const totalAmount = await contract.totalAmountETH();
-
-            yieldElement.textContent = `${formatETH(yieldAmount)} ETH`;
-            totalElement.textContent = `${formatETH(totalAmount)} ETH`;
-            
-            yieldError.textContent = '';
-            totalError.textContent = '';
-        } catch (error) {
-            yieldElement.textContent = 'Error';
-            totalElement.textContent = 'Error';
-            yieldError.textContent = error.message;
-            totalError.textContent = error.message;
-        }
-    }
-
-    // Initial update
-    updateStats();
-
-    // Update every 30 seconds
-    setInterval(updateStats, 30000);
-</script>
     
+    const ethersProvider = new ethers.providers.Web3Provider(window.ethereum);
+    const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, ethersProvider);
+    
+    async function updateBalances() {
+        try {
+            // Get ETH amounts
+            const totalAmountETH = await contract.totalAmountETH();
+            const ethAmount = ethers.utils.formatEther(totalAmountETH);
+            
+            // Get USDB amounts
+            const totalAmountUSDB = await contract.totalAmountUSDB();
+            const usdbAmount = ethers.utils.formatUnits(totalAmountUSDB, 18); // Assuming USDB has 18 decimals
+            
+            // Fetch ETH price in USD from CoinGecko API
+            const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd');
+            const data = await response.json();
+            const ethPrice = data.ethereum.usd;
+            
+            // Calculate total USD value
+            const ethUsdValue = parseFloat(ethAmount) * ethPrice;
+            const usdbUsdValue = parseFloat(usdbAmount); // USDB is already in USD
+            const totalUsdValue = ethUsdValue + usdbUsdValue;
+            
+            // Update the DOM
+            const amountElement = document.querySelector('.amount-deposited');
+            if (amountElement) {
+                amountElement.textContent = `$${totalUsdValue.toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                })}`;
+            }
+            
+            // Update donation amount (yield amount)
+            const ethYield = await contract.fetchYieldAmountETH();
+            const usdbYield = await contract.fetchYieldAmountUSDB();
+            
+            const ethYieldUsd = ethers.utils.formatEther(ethYield) * ethPrice;
+            const usdbYieldUsd = ethers.utils.formatUnits(usdbYield, 18);
+            const totalYieldUsd = ethYieldUsd + parseFloat(usdbYieldUsd);
+            
+            const donationElement = document.querySelector('.donation-amount');
+            if (donationElement) {
+                donationElement.textContent = `$${totalYieldUsd.toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                })}`;
+            }
+            
+        } catch (error) {
+            console.error('Error updating balances:', error);
+        }
+    }
+    
+    // Update balances initially and every 30 seconds
+    updateBalances();
+    setInterval(updateBalances, 30000);
+    
+    // Listen for account changes
+    if (window.ethereum) {
+        window.ethereum.on('accountsChanged', updateBalances);
+        window.ethereum.on('chainChanged', updateBalances);
+    }
+</script>    
     <img src="blast.svg" alt="Blast" class="blast-logo">
 
 </body>

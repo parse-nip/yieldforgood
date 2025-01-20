@@ -387,111 +387,79 @@ right: 30px;
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
     <script>
-        const CONTRACT_ADDRESSES = ['0x1807b73a78f55385443B54B75dBc18f7Ca07AaF5'];
-        const CONTRACT_ABI = [
-            {
-                "inputs": [],
-                "name": "fetchYieldAmountETH",
-                "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "fetchYieldAmountUSDB",
-                "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "totalAmount",
-                "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
-                "stateMutability": "view",
-                "type": "function"
-            }
-        ];
+const CONTRACT_ADDRESSES = ['0x1807b73a78f55385443B54B75dBc18f7Ca07AaF5'];
+const CONTRACT_ABI = [
+  {
+    "inputs": [],
+    "name": "fetchYieldAmountETH",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "fetchYieldAmountUSDB",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "totalAmount",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  }
+];
 
-        async function verifyContract(provider, address) {
-            const code = await provider.getCode(address);
-            return code !== '0x';
-        }
+let contract;
 
-        async function connectContract(address) {
-            try {
-                if (typeof window.ethers === 'undefined') {
-                    throw new Error('Ethers library not loaded');
-                }
+async function initContract() {
+  if (typeof window.ethers === 'undefined') {
+    throw new Error('Ethers library not loaded');
+  }
 
-                const blastRPC = "https://rpc.blast.io";
-                const provider = new ethers.providers.JsonRpcProvider(blastRPC);
-                await provider.ready;
+  const blastRPC = "https://rpc.blast.io";
+  const provider = new ethers.providers.JsonRpcProvider(blastRPC);
+  await provider.ready;
 
-                const hasCode = await verifyContract(provider, address);
-                if (!hasCode) {
-                    throw new Error(`No contract found at ${address}`);
-                }
+  contract = new ethers.Contract(CONTRACT_ADDRESSES[0], CONTRACT_ABI, provider);
+}
 
-                return new ethers.Contract(address, CONTRACT_ABI, provider);
-            } catch (error) {
-                console.error('Error connecting to contract:', error);
-                return null;
-            }
-        }
+async function updateStats() {
+  const charitiesNumberElement = document.getElementById('charitiesNumber');
+  const yieldAmountElement = document.getElementById('yieldAmount');
+  const totalAmountElement = document.getElementById('totalAmount');
+  const errorElement = document.getElementById('yieldError');
+  const totalErrorElement = document.getElementById('totalError');
 
-        async function fetchContractData(contract) {
-            const results = {
-                yieldETH: ethers.BigNumber.from(0),
-                yieldUSDC: ethers.BigNumber.from(0),
-                totalAmount: ethers.BigNumber.from(0),
-                errors: []
-            };
+  try {
+    const yieldETH = await contract.fetchYieldAmountETH();
+    const yieldUSDC = await contract.fetchYieldAmountUSDB();
+    const totalAmount = await contract.totalAmount();
 
-            try {
-                const code = await contract.provider.getCode(contract.address);
-                console.log('Contract code length:', (code.length - 2) / 2, 'bytes');
+    charitiesNumberElement.textContent = '3';
+    yieldAmountElement.textContent = ethers.utils.formatEther(yieldETH) + ' ETH';
+    totalAmountElement.textContent = ethers.utils.formatEther(totalAmount) + ' ETH';
 
-                results.yieldETH = await contract.fetchYieldAmountETH();
-                results.yieldUSDC = await contract.fetchYieldAmountUSDB();
-                results.totalAmount = await contract.totalAmount();
-            } catch (error) {
-                results.errors.push(`Contract interaction failed: ${error.message}`);
-            }
+    errorElement.textContent = '';
+    totalErrorElement.textContent = '';
+  } catch (error) {
+    charitiesNumberElement.textContent = '3';
+    yieldAmountElement.textContent = 'Error';
+    totalAmountElement.textContent = 'Error';
+    errorElement.textContent = 'Error fetching yield amount: ' + error.message;
+    totalErrorElement.textContent = 'Error fetching total amount: ' + error.message;
+  }
+}
 
-            return results;
-        }
+async function main() {
+  await initContract();
+  await updateStats();
+  setInterval(updateStats, 10000); // Update every 10 seconds
+}
 
-        async function updateStats() {
-            const yieldETHElement = document.getElementById('yieldAmount');
-            const totalAmountElement = document.getElementById('totalAmount');
-            const errorElement = document.getElementById('contractError');
-
-            yieldETHElement.textContent = 'Checking...';
-            totalAmountElement.textContent = 'Checking...';
-            errorElement.textContent = '';
-
-            for (const address of CONTRACT_ADDRESSES) {
-                const contract = await connectContract(address);
-                if (!contract) {
-                    errorElement.textContent = 'Failed to connect to contract';
-                    continue;
-                }
-
-                const data = await fetchContractData(contract);
-                if (data.errors.length > 0) {
-                    errorElement.textContent = data.errors.join('; ');
-                } else {
-                    yieldETHElement.textContent = ethers.utils.formatEther(data.yieldETH) + ' ETH';
-                    totalAmountElement.textContent = ethers.utils.formatEther(data.totalAmount) + ' ETH';
-                }
-            }
-        }
-
-        // Initial update
-        await updateStats();
-
-        // Update every 30 seconds
-        setInterval(updateStats, 30000);
+main();
     </script>
 
     

@@ -124,6 +124,37 @@ css
 
     .stat-label {
         color: #666;
+        font-size: 16px;
+    }
+
+    .currency-group {
+        text-align: center;
+        padding: 0 40px;
+    }
+
+    .currency-label {
+        font-size: 16px;
+        color: #666;
+        margin-bottom: 15px;
+    }
+
+    .error {
+        color: red;
+        font-size: 14px;
+        margin-top: 5px;
+    }
+
+    @media (max-width: 768px) {
+        .stats {
+            flex-direction: column;
+            align-items: center;
+            gap: 40px;
+            padding: 40px 20px;
+        }
+
+        .stat-item, .currency-group {
+            padding: 0;
+        }
     }
 
     .marquee-container {
@@ -266,35 +297,34 @@ right: 30px;
     <a href="/charity.html" class="donate-btn">GET STARTED</a>
 </section>
 <section class="stats">
+    <div class="stat-item">
+        <div class="stat-number" id="charitiesNumber">3</div>
+        <div class="stat-label">Charities Supported</div>
+    </div>
 
-<div class="stat-item">
+    <div class="currency-group">
+        <div class="stat-number" id="yieldAmountETH">Loading...</div>
+        <div class="stat-label">ETH Yield</div>
+        <div class="error" id="yieldErrorETH"></div>
+    </div>
 
-<div class="stat-number" id="charitiesNumber">3</div>
+    <div class="currency-group">
+        <div class="stat-number" id="totalAmountETH">Loading...</div>
+        <div class="stat-label">ETH Deposited</div>
+        <div class="error" id="totalErrorETH"></div>
+    </div>
 
-<div class="stat-label">Charities Supported</div>
+    <div class="currency-group">
+        <div class="stat-number" id="yieldAmountUSDB">Loading...</div>
+        <div class="stat-label">USDB Yield</div>
+        <div class="error" id="yieldErrorUSDB"></div>
+    </div>
 
-</div>
-
-<div class="stat-item">
-
-<div class="stat-number" id="yieldAmount">Loading...</div>
-
-<div class="stat-label">Donation Amount</div>
-
-<div class="error" id="yieldError"></div>
-
-</div>
-
-<div class="stat-item">
-
-<div class="stat-number" id="totalAmount">Loading...</div>
-
-<div class="stat-label">Amount Deposited</div>
-
-<div class="error" id="totalError"></div>
-
-</div>
-
+    <div class="currency-group">
+        <div class="stat-number" id="totalAmountUSDB">Loading...</div>
+        <div class="stat-label">USDB Deposited</div>
+        <div class="error" id="totalErrorUSDB"></div>
+    </div>
 </section>
 <div class="marquee-container">
 
@@ -402,6 +432,20 @@ right: 30px;
             "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
             "stateMutability": "view",
             "type": "function"
+        },
+        {
+            "inputs": [],
+            "name": "fetchYieldAmountUSDB",
+            "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "inputs": [],
+            "name": "totalAmountUSDB",
+            "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+            "stateMutability": "view",
+            "type": "function"
         }
     ];
 
@@ -416,15 +460,23 @@ right: 30px;
     }
 
     function formatETH(value) {
-        // Convert to number and fix to 4 decimal places
         return Number(ethers.utils.formatEther(value)).toFixed(4);
     }
 
+    function formatUSDB(value) {
+        return Number(ethers.utils.formatEther(value)).toFixed(2);
+    }
+
     async function updateStats() {
-        const yieldElement = document.getElementById('yieldAmount');
-        const totalElement = document.getElementById('totalAmount');
-        const yieldError = document.getElementById('yieldError');
-        const totalError = document.getElementById('totalError');
+        const yieldElementETH = document.getElementById('yieldAmountETH');
+        const totalElementETH = document.getElementById('totalAmountETH');
+        const yieldErrorETH = document.getElementById('yieldErrorETH');
+        const totalErrorETH = document.getElementById('totalErrorETH');
+        
+        const yieldElementUSDB = document.getElementById('yieldAmountUSDB');
+        const totalElementUSDB = document.getElementById('totalAmountUSDB');
+        const yieldErrorUSDB = document.getElementById('yieldErrorUSDB');
+        const totalErrorUSDB = document.getElementById('totalErrorUSDB');
 
         try {
             const contract = await connectToContract();
@@ -432,19 +484,37 @@ right: 30px;
                 throw new Error('Failed to connect to contract');
             }
 
-            const yieldAmount = await contract.fetchYieldAmountETH();
-            const totalAmount = await contract.totalAmountETH();
-
-            yieldElement.textContent = `${formatETH(yieldAmount)} ETH`;
-            totalElement.textContent = `${formatETH(totalAmount)} ETH`;
+            // Fetch ETH stats
+            const yieldAmountETH = await contract.fetchYieldAmountETH();
+            const totalAmountETH = await contract.totalAmountETH();
             
-            yieldError.textContent = '';
-            totalError.textContent = '';
+            // Fetch USDB stats
+            const yieldAmountUSDB = await contract.fetchYieldAmountUSDB();
+            const totalAmountUSDB = await contract.totalAmountUSDB();
+
+            // Update ETH displays
+            yieldElementETH.textContent = `${formatETH(yieldAmountETH)} ETH`;
+            totalElementETH.textContent = `${formatETH(totalAmountETH)} ETH`;
+            yieldErrorETH.textContent = '';
+            totalErrorETH.textContent = '';
+
+            // Update USDB displays
+            yieldElementUSDB.textContent = `$${formatUSDB(yieldAmountUSDB)}`;
+            totalElementUSDB.textContent = `$${formatUSDB(totalAmountUSDB)}`;
+            yieldErrorUSDB.textContent = '';
+            totalErrorUSDB.textContent = '';
         } catch (error) {
-            yieldElement.textContent = 'Error';
-            totalElement.textContent = 'Error';
-            yieldError.textContent = error.message;
-            totalError.textContent = error.message;
+            // Handle ETH errors
+            yieldElementETH.textContent = 'Error';
+            totalElementETH.textContent = 'Error';
+            yieldErrorETH.textContent = error.message;
+            totalErrorETH.textContent = error.message;
+
+            // Handle USDB errors
+            yieldElementUSDB.textContent = 'Error';
+            totalElementUSDB.textContent = 'Error';
+            yieldErrorUSDB.textContent = error.message;
+            totalErrorUSDB.textContent = error.message;
         }
     }
 
